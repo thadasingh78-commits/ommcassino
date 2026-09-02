@@ -452,13 +452,8 @@
 
         function playGame(gameName) {
             targetGame = gameName;
-            let isLoggedIn = localStorage.getItem('userLoggedIn');
-            
-            if (isLoggedIn !== 'true') {
-                openLogin();
-            } else {
-                redirectToGame(gameName);
-            }
+            // Bina login check kiye seedha game open hone denge (Guest mode with 0 balance)
+            redirectToGame(gameName);
         }
 
         function openLogin() {
