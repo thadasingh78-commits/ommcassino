@@ -217,7 +217,7 @@ def send_welcome(message):
         "**Account & Balance Controls:**\n"
         "➕ `/create_id <username> <password>`\n"
         "💰 `/add_bal <username> <amount>`\n"
-        "💸 `/minus_bal <username> <amount>`\n\n"
+        "💸 `/minus_bal <username> <amount>` ya `/minbal <username> <amount>`\n\n"
         "**Emergency & System Controls:**\n"
         "🔒 `/lock` - Emergency lock (Users ki win rate 0% kar dega)\n"
         "🏛️ `/house` - House edge boost (House profit mode)\n"
@@ -260,12 +260,17 @@ def handle_create_id(message):
     conn = get_db()
     cursor = conn.cursor()
     try:
+        cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
+        if cursor.fetchone():
+            bot.reply_to(message, "ID Already Exist!")
+            return
+
         cursor.execute("INSERT INTO users (username, password, balance) VALUES (%s, %s, 100.0)", (username, password))
         conn.commit()
         bot.reply_to(message, f"✅ Account `{username}` successfully created with ₹100 initial balance!", parse_mode="Markdown")
     except Exception as e:
         conn.rollback()
-        bot.reply_to(message, f"❌ Error: Username pehle se taken hai!")
+        bot.reply_to(message, "ID Already Exist!")
     finally:
         cursor.close()
         conn.close()
@@ -291,11 +296,11 @@ def handle_add_balance(message):
     conn.close()
     bot.reply_to(message, f"💰 Added ₹{amount} to `{username}`.")
 
-@bot.message_handler(commands=['minus_bal'])
+@bot.message_handler(commands=['minus_bal', 'minbal'])
 def handle_minus_balance(message):
     args = message.text.split()
     if len(args) < 3:
-        bot.reply_to(message, "⚠️ Usage: `/minus_bal <username> <amount>`")
+        bot.reply_to(message, "⚠️ Usage: `/minbal <username> <amount>`")
         return
     username = args[1]
     try:
@@ -1418,6 +1423,10 @@ def admin_create_user():
     conn = get_db()
     cursor = conn.cursor()
     try:
+        cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
+        if cursor.fetchone():
+            return jsonify({"status": "error", "message": "ID Already Exist!"})
+
         cursor.execute(
             "INSERT INTO users (username, password, balance) VALUES (%s, %s, %s)",
             (username, password, initial_balance),
@@ -1427,7 +1436,7 @@ def admin_create_user():
         status = "success"
     except Exception as e:
         conn.rollback()
-        msg = f"Failed to create user: {str(e)}"
+        msg = "ID Already Exist!"
         status = "error"
     finally:
         cursor.close()
