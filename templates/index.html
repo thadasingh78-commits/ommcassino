@@ -168,7 +168,7 @@
             border-color: #ef4444;
         }
 
-        /* Spin Video Timer Overlay (Default hidden via JS/CSS control) */
+        /* Spin Video Timer Overlay */
         .spin-timer-overlay {
             position: absolute;
             bottom: 20px;
@@ -183,7 +183,7 @@
             gap: 10px;
             z-index: 10;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: none; /* Default hidden */
+            display: none;
         }
 
         .spin-timer-overlay span {
@@ -414,7 +414,7 @@
 <body>
 
     <div class="navbar">
-        <a href="/lobby" class="lobby-btn">🏠 Lobby</a>
+        <a href="/" class="lobby-btn">🏠 Lobby</a>
         <div class="brand-name">⚡ OOM TYRE</div>
         <div class="user-info">
             <span id="userDisp">Guest</span>
@@ -430,7 +430,6 @@
         <div class="live-tag">LIVE</div>
         <div class="status-tag" id="statusTag">BETTING OPEN</div>
         
-        <!-- Timer & Place Your Bet Overlay (Sirf Spin Video ke liye) -->
         <div class="spin-timer-overlay" id="spinTimerOverlay">
             <span>Place Your Bet</span>
             <div class="timer-count" id="spinTimerCount">00s</div>
@@ -668,7 +667,6 @@
             const overlay = document.getElementById('spinTimerOverlay');
             const timerCount = document.getElementById('spinTimerCount');
             
-            // Sirf spin mode mein hi timer show karein
             if (mode === 'spin') {
                 overlay.style.display = 'flex';
             }
@@ -677,11 +675,11 @@
             
             if (spinTimerInterval) clearInterval(spinTimerInterval);
 
-            spinTimerCount.innerText = (remainingTime < 10 ? "0" : "") + remainingTime + "s";
+            timerCount.innerText = (remainingTime < 10 ? "0" : "") + remainingTime + "s";
 
             spinTimerInterval = setInterval(() => {
                 remainingTime = Math.max(0, Math.ceil(player.duration - player.currentTime));
-                spinTimerCount.innerText = (remainingTime < 10 ? "0" : "") + remainingTime + "s";
+                timerCount.innerText = (remainingTime < 10 ? "0" : "") + remainingTime + "s";
 
                 if (remainingTime <= 0 || player.ended) {
                     clearInterval(spinTimerInterval);
@@ -699,7 +697,6 @@
         }
 
         player.onended = () => {
-            // Har haal mein timer aur overlay ko hide kar do video khatam hone par
             if (spinTimerInterval) clearInterval(spinTimerInterval);
             document.getElementById('spinTimerOverlay').style.display = 'none';
 
@@ -709,7 +706,6 @@
                     .then(data => {
                         mode = 'outcome';
 
-                        // Outcome video aate hi timer ko dobara strictly hide kar rahe hain
                         document.getElementById('spinTimerOverlay').style.display = 'none';
 
                         const tag = document.getElementById('statusTag');
@@ -762,7 +758,6 @@
                     .then(response => {
                         if(response.status === 'success') {
                             updateWalletUI(response.new_balance);
-                            console.log("Jeete hue paise add ho gaye:", response.payout);
                         }
                     }).catch(err => console.log("Claim win error:", err));
                 }
