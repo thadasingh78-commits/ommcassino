@@ -75,6 +75,27 @@
             transform: scale(1.03);
         }
 
+        /* Create ID Green Button */
+        .create-id-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .create-id-btn:hover {
+            transform: scale(1.03);
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
         /* Logout Button Style */
         .logout-btn {
             background: rgba(239, 68, 68, 0.15);
@@ -282,6 +303,9 @@
             <button class="wallet-btn" id="userWalletBtn" onclick="handleWalletClick()">
                 <span>🔑</span> LOGIN
             </button>
+            <a href="https://t.me/agent_omm" target="_blank" class="create-id-btn">
+                <span>➕</span> CREATE ID
+            </a>
             <button class="logout-btn" id="logoutBtn" onclick="doLogout()">
                 <span>🚪</span> Logout
             </button>
