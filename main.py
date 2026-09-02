@@ -1353,6 +1353,7 @@ def bot_house(message):
 def run_telegram_bot():
     print("🤖 Telegram Admin Bot Thread Starting...")
     try:
+        bot.remove_webhook()
         bot.infinity_polling(timeout=10, long_polling_timeout=5)
     except Exception as e:
         print(f"⚠️ Telegram Bot Error: {e}")
