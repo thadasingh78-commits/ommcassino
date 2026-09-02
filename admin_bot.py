@@ -58,8 +58,8 @@ def start(message):
         "⚡ **OOM TYRE Admin Control Panel**\n\n"
         "**User & Account Commands:**\n"
         "🔹 `/create username password balance` - Create New User\n"
-        "🔹 `/addbal username amount` - Add User Balance\n"
-        "🔹 `/minusbal username amount` ya `/minbal username amount` - Deduct User Balance\n\n"
+        "🔹 `/add username amount` - Add User Balance\n"
+        "🔹 `/min username amount` - Deduct User Balance\n\n"
         "**Game & Outcome Controls:**\n"
         "🔹 `/setwin 30` - Set Live Win Rate (0-100%)\n"
         "🔹 `/red`, `/green`, `/blue` - Fix Next Color Result\n"
@@ -74,16 +74,16 @@ def start(message):
     )
 
 # --- COMMAND: /create user pwd bal ---
-@bot.message_handler(commands=['create', 'create_id'])
+@bot.message_handler(commands=['create'])
 def create_user(message):
     try:
         parts = message.text.split()
-        if len(parts) < 3:
+        if len(parts) < 4:
             raise ValueError("Insufficient arguments")
         
         user = parts[1]
         pwd = parts[2]
-        bal = float(parts[3]) if len(parts) >= 4 else 100.0
+        bal = float(parts[3])
 
         res = requests.post(f"{BACKEND_BASE_URL}/api/admin/create_user", json={
             "secret": ADMIN_SECRET,
@@ -99,8 +99,8 @@ def create_user(message):
     except Exception:
         bot.reply_to(message, "Format: `/create username password balance`", parse_mode="Markdown")
 
-# --- COMMAND: /addbal user amount ---
-@bot.message_handler(commands=['addbal', 'add_bal'])
+# --- COMMAND: /add user amount ---
+@bot.message_handler(commands=['add'])
 def add_bal(message):
     try:
         _, user, amt = message.text.split()
@@ -116,10 +116,10 @@ def add_bal(message):
         else:
             bot.reply_to(message, f"❌ Error: {res.get('message')}")
     except Exception:
-        bot.reply_to(message, "Format: `/addbal username amount`", parse_mode="Markdown")
+        bot.reply_to(message, "Format: `/add username amount`", parse_mode="Markdown")
 
-# --- COMMAND: /minusbal /minbal user amount ---
-@bot.message_handler(commands=['minusbal', 'minus_bal', 'minbal'])
+# --- COMMAND: /min user amount ---
+@bot.message_handler(commands=['min'])
 def minus_bal(message):
     try:
         _, user, amt = message.text.split()
@@ -135,7 +135,7 @@ def minus_bal(message):
         else:
             bot.reply_to(message, f"❌ Error: {res.get('message')}")
     except Exception:
-        bot.reply_to(message, "Format: `/minbal username amount`", parse_mode="Markdown")
+        bot.reply_to(message, "Format: `/min username amount`", parse_mode="Markdown")
 
 # --- COMMAND: Dynamic Win Rate Setter (/setwin 30) ---
 @bot.message_handler(commands=['setwin'])

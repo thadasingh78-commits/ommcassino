@@ -215,9 +215,9 @@ def send_welcome(message):
         "🔵 `/blue` - Agla round BLUE play hoga\n"
         "🎯 `/num <1-36>` - Roulette par next winning number fix karein\n\n"
         "**Account & Balance Controls:**\n"
-        "➕ `/create_id <username> <password>`\n"
-        "💰 `/add_bal <username> <amount>`\n"
-        "💸 `/minus_bal <username> <amount>` ya `/minbal <username> <amount>`\n\n"
+        "➕ `/create <username> <password> <balance>`\n"
+        "💰 `/add <username> <amount>`\n"
+        "💸 `/min <username> <amount>`\n\n"
         "**Emergency & System Controls:**\n"
         "🔒 `/lock` - Emergency lock (Users ki win rate 0% kar dega)\n"
         "🏛️ `/house` - House edge boost (House profit mode)\n"
@@ -250,36 +250,42 @@ def fix_roulette_outcome(message):
     except ValueError:
         bot.reply_to(message, "❌ Invalid number format!")
 
-@bot.message_handler(commands=['create_id'])
+@bot.message_handler(commands=['create'])
 def handle_create_id(message):
     args = message.text.split()
-    if len(args) < 3:
-        bot.reply_to(message, "⚠️ Usage: `/create_id <username> <password>`")
+    if len(args) < 4:
+        bot.reply_to(message, "⚠️ Usage: `/create <username> <password> <balance>`", parse_mode="Markdown")
         return
     username, password = args[1], args[2]
+    try:
+        balance = float(args[3])
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid Balance Amount!")
+        return
+
     conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
         if cursor.fetchone():
-            bot.reply_to(message, "ID Already Exist!")
+            bot.reply_to(message, "❌ ID Already Exist!")
             return
 
-        cursor.execute("INSERT INTO users (username, password, balance) VALUES (%s, %s, 100.0)", (username, password))
+        cursor.execute("INSERT INTO users (username, password, balance) VALUES (%s, %s, %s)", (username, password, balance))
         conn.commit()
-        bot.reply_to(message, f"✅ Account `{username}` successfully created with ₹100 initial balance!", parse_mode="Markdown")
-    except Exception as e:
+        bot.reply_to(message, f"✅ Account `{username}` successfully created with ₹{balance} balance!", parse_mode="Markdown")
+    except Exception:
         conn.rollback()
-        bot.reply_to(message, "ID Already Exist!")
+        bot.reply_to(message, "❌ ID Already Exist!")
     finally:
         cursor.close()
         conn.close()
 
-@bot.message_handler(commands=['add_bal'])
+@bot.message_handler(commands=['add'])
 def handle_add_balance(message):
     args = message.text.split()
     if len(args) < 3:
-        bot.reply_to(message, "⚠️ Usage: `/add_bal <username> <amount>`")
+        bot.reply_to(message, "⚠️ Usage: `/add <username> <amount>`", parse_mode="Markdown")
         return
     username = args[1]
     try:
@@ -296,11 +302,11 @@ def handle_add_balance(message):
     conn.close()
     bot.reply_to(message, f"💰 Added ₹{amount} to `{username}`.")
 
-@bot.message_handler(commands=['minus_bal', 'minbal'])
+@bot.message_handler(commands=['min'])
 def handle_minus_balance(message):
     args = message.text.split()
     if len(args) < 3:
-        bot.reply_to(message, "⚠️ Usage: `/minbal <username> <amount>`")
+        bot.reply_to(message, "⚠️ Usage: `/min <username> <amount>`", parse_mode="Markdown")
         return
     username = args[1]
     try:
