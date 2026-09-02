@@ -59,7 +59,7 @@ def start(message):
         "**User & Account Commands:**\n"
         "🔹 `/create username password balance` - Create New User\n"
         "🔹 `/addbal username amount` - Add User Balance\n"
-        "🔹 `/minusbal username amount` - Deduct User Balance\n\n"
+        "🔹 `/minusbal username amount` ya `/minbal username amount` - Deduct User Balance\n\n"
         "**Game & Outcome Controls:**\n"
         "🔹 `/setwin 30` - Set Live Win Rate (0-100%)\n"
         "🔹 `/red`, `/green`, `/blue` - Fix Next Color Result\n"
@@ -118,8 +118,8 @@ def add_bal(message):
     except Exception:
         bot.reply_to(message, "Format: `/addbal username amount`", parse_mode="Markdown")
 
-# --- COMMAND: /minusbal user amount ---
-@bot.message_handler(commands=['minusbal', 'minus_bal'])
+# --- COMMAND: /minusbal /minbal user amount ---
+@bot.message_handler(commands=['minusbal', 'minus_bal', 'minbal'])
 def minus_bal(message):
     try:
         _, user, amt = message.text.split()
@@ -135,7 +135,7 @@ def minus_bal(message):
         else:
             bot.reply_to(message, f"❌ Error: {res.get('message')}")
     except Exception:
-        bot.reply_to(message, "Format: `/minusbal username amount`", parse_mode="Markdown")
+        bot.reply_to(message, "Format: `/minbal username amount`", parse_mode="Markdown")
 
 # --- COMMAND: Dynamic Win Rate Setter (/setwin 30) ---
 @bot.message_handler(commands=['setwin'])
