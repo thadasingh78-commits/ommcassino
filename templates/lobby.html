@@ -383,10 +383,30 @@
         let targetGame = null;
 
         window.onload = function() {
-            updateWalletUI();
-            fetchServerBalance();
+            checkAndRestoreSession();
             setInterval(fetchServerBalance, 3000);
         };
+
+        // Check session and fetch real balance from server on load / restart
+        async function checkAndRestoreSession() {
+            const isLoggedIn = localStorage.getItem('userLoggedIn');
+            if (isLoggedIn === 'true') {
+                try {
+                    let response = await fetch('/api/balance');
+                    let data = await response.json();
+                    if (data.success) {
+                        localStorage.setItem('userBalance', data.balance);
+                    } else {
+                        localStorage.removeItem('userLoggedIn');
+                        localStorage.removeItem('username');
+                        localStorage.removeItem('userBalance');
+                    }
+                } catch (err) {
+                    console.error("Session restore error:", err);
+                }
+            }
+            updateWalletUI();
+        }
 
         // Real-time server balance synchronization
         async function fetchServerBalance() {
@@ -452,7 +472,7 @@
 
         function playGame(gameName) {
             targetGame = gameName;
-            // Bina login check kiye seedha game open hone denge (Guest mode with 0 balance)
+            // Bina login check kiye seedha game open hone denge (Guest mode with 0 balance)[cite: 2]
             redirectToGame(gameName);
         }
 
