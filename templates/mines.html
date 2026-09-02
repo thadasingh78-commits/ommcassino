@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOM MINES - Gem Hunter Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #07090e;
+            color: #fff;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 30px;
+        }
+
+        /* Navbar */
+        .navbar {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(18, 24, 38, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a3447;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .back-btn {
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            background: linear-gradient(45deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .balance-badge {
+            background: #1e293b;
+            border: 1px solid #f59e0b;
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: #f59e0b;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Game Container */
+        .game-container {
+            width: 100%;
+            max-width: 380px;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 10px;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: #121826;
+            border: 1px solid #2a3447;
+            border-radius: 14px;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-item .label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .stat-item .value {
+            font-size: 18px;
+            font-weight: 900;
+            color: #10b981;
+        }
+
+        /* Mines Grid (5x5) */
+        .mines-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            background: #121826;
+            border: 1px solid #2a3447;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+        .tile {
+            aspect-ratio: 1;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: transform 0.2s, background 0.2s, border-color 0.2s;
+            user-select: none;
+        }
+
+        .tile:hover:not(.revealed) {
+            background: #334155;
+            transform: scale(0.95);
+        }
+
+        .tile.revealed.gem {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+            animation: popIn 0.3s ease-out forwards;
+        }
+
+        .tile.revealed.bomb {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            animation: bombPop 0.4s ease-out forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bombPop {
+            0% { transform: scale(0.5) rotate(0deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(-10deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-6px, 4px); }
+            40% { transform: translate(6px, -4px); }
+            60% { transform: translate(-4px, -2px); }
+            80% { transform: translate(4px, 2px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .shake-screen {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: #121826;
+            border: 1px solid #2a3447;
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #07090e;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 8px 12px;
+        }
+
+        .control-row label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .control-row input, .control-row select {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            text-align: right;
+            outline: none;
+            width: 110px;
+        }
+
+        .control-row select option {
+            background: #121826;
+            color: #fff;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            transition: 0.2s;
+        }
+
+        .action-btn.cashout {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #121826;
+            padding: 12px 20px;
+            border-radius: 14px;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            width: 280px;
+            text-align: center;
+        }
+
+        .toast-container.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: #3b82f6;
+            text-transform: uppercase;
+        }
+
+        .toast-desc {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body id="mainBody">
+
+    <div class="navbar">
+        <a href="/" class="back-btn">⬅ LOBBY</a>
+        <div class="brand-name">⚡ OOM MINES</div>
+        <div class="balance-badge">₹<span id="balDisp">0.00</span></div>
+    </div>
+
+    <div class="game-container">
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="label">Multiplier</div>
+                <div class="value" id="multDisp">1.00x</div>
+            </div>
+            <div class="stat-item" style="text-align: right;">
+                <div class="label">Potential Win</div>
+                <div class="value" id="winDisp">₹0.00</div>
+            </div>
+        </div>
+
+        <!-- 5x5 Mines Grid -->
+        <div class="mines-grid" id="minesGrid">
+            <!-- Generated via JS -->
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <div class="control-row">
+                <label>Bet Amount (₹)</label>
+                <input type="number" id="betAmount" value="100" min="10">
+            </div>
+
+            <div class="control-row">
+                <label>Mines Count</label>
+                <select id="minesCount">
+                    <option value="1">1 Mine</option>
+                    <option value="3" selected>3 Mines</option>
+                    <option value="5">5 Mines</option>
+                    <option value="10">10 Mines</option>
+                </select>
+            </div>
+
+            <button class="action-btn" id="actionBtn" onclick="handleGameAction()">START GAME</button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastBox">
+        <div class="toast-title" id="toastTitle">MINES</div>
+        <div class="toast-desc" id="toastDesc">Status message</div>
+    </div>
+
+    <script>
+        let currentBalance = 0.00;
+        let gameActive = false;
+        let minesArray = [];
+        let revealedCount = 0;
+        let currentMultiplier = 1.00;
+        let currentBet = 100;
+        let totalTiles = 25;
+
+        // Fetch real server balance on load
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchServerBalance();
+            createGrid(false);
+        });
+
+        function fetchServerBalance() {
+            fetch('/api/balance')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        currentBalance = data.balance;
+                        updateWalletUI();
+                    }
+                })
+                .catch(err => console.log('Balance fetch error:', err));
+        }
+
+        function updateWalletUI() {
+            document.getElementById('balDisp').innerText = currentBalance.toFixed(2);
+        }
+
+        function createGrid(interactive = false) {
+            const grid = document.getElementById('minesGrid');
+            grid.innerHTML = '';
+            for (let i = 0; i < totalTiles; i++) {
+                let tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.index = i;
+                if (interactive) {
+                    tile.onclick = () => clickTile(i);
+                }
+                grid.appendChild(tile);
+            }
+        }
+
+        function handleGameAction() {
+            if (!gameActive) {
+                startGame();
+            } else {
+                cashOut();
+            }
+        }
+
+        function startGame() {
+            let betInput = parseFloat(document.getElementById('betAmount').value);
+            if (isNaN(betInput) || betInput < 10) {
+                showToast("Minimum bet is ₹10!");
+                return;
+            }
+            if (betInput > currentBalance) {
+                showToast("Insufficient Balance!");
+                return;
+            }
+
+            currentBet = betInput;
+
+            // Call backend to deduct bet amount
+            fetch('/api/mines/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: currentBet })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentBalance = data.balance;
+                    updateWalletUI();
+
+                    let mCount = parseInt(document.getElementById('minesCount').value);
+                    
+                    minesArray = new Array(totalTiles).fill(false);
+                    let placed = 0;
+                    while (placed < mCount) {
+                        let idx = Math.floor(Math.random() * totalTiles);
+                        if (!minesArray[idx]) {
+                            minesArray[idx] = true;
+                            placed++;
+                        }
+                    }
+
+                    gameActive = true;
+                    revealedCount = 0;
+                    currentMultiplier = 1.00;
+
+                    updateStats();
+                    createGrid(true);
+
+                    let btn = document.getElementById('actionBtn');
+                    btn.innerText = "CASH OUT";
+                    btn.classList.add('cashout');
+                    document.getElementById('minesCount').disabled = true;
+                    document.getElementById('betAmount').disabled = true;
+
+                    showToast("Game Started! Find the gems!", "STARTED");
+                } else {
+                    showToast(data.message || "Error starting game");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Server connection error");
+            });
+        }
+
+        function clickTile(index) {
+            if (!gameActive) return;
+            
+            let tile = document.querySelector(`[data-index='${index}']`);
+            if (tile.classList.contains('revealed')) return;
+
+            if (minesArray[index]) {
+                // Hit a Bomb! Game Over
+                tile.classList.add('revealed', 'bomb');
+                tile.innerText = "💣";
+                triggerGameOver(false);
+            } else {
+                // Safe Gem found!
+                tile.classList.add('revealed', 'gem');
+                tile.innerText = "💎";
+                revealedCount++;
+                
+                let mCount = parseInt(document.getElementById('minesCount').value);
+                let multiplierIncrement = 1 + (mCount * 0.12) + (revealedCount * 0.08);
+                currentMultiplier = Number((currentMultiplier * multiplierIncrement).toFixed(2));
+                
+                updateStats();
+
+                let totalSafe = totalTiles - mCount;
+                if (revealedCount === totalSafe) {
+                    cashOut(true);
+                }
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('multDisp').innerText = currentMultiplier.toFixed(2) + 'x';
+            let potentialWin = currentBet * currentMultiplier;
+            document.getElementById('winDisp').innerText = '₹' + potentialWin.toFixed(2);
+        }
+
+        function triggerGameOver(isWin) {
+            gameActive = false;
+            
+            let tiles = document.querySelectorAll('.tile');
+            tiles.forEach((t, idx) => {
+                if (minesArray[idx]) {
+                    t.classList.add('revealed', 'bomb');
+                    t.innerText = "💣";
+                }
+            });
+
+            // Notify backend about the loss
+            fetch('/api/mines/loss', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        currentBalance = data.balance;
+                        updateWalletUI();
+                    }
+                });
+
+            if (!isWin) {
+                let body = document.getElementById('mainBody');
+                body.classList.add('shake-screen');
+                setTimeout(() => body.classList.remove('shake-screen'), 400);
+
+                showToast(`Boom! You hit a mine and lost ₹${currentBet.toFixed(2)}`, "GAME OVER");
+            }
+
+            resetControls();
+        }
+
+        function cashOut(auto = false) {
+            if (!gameActive && !auto) return;
+            gameActive = false;
+
+            let winnings = currentBet * currentMultiplier;
+
+            // Notify backend about the win / cashout
+            fetch('/api/mines/cashout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ winnings: winnings })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentBalance = data.balance;
+                    updateWalletUI();
+                }
+            })
+            .catch(err => console.error(err));
+
+            let tiles = document.querySelectorAll('.tile');
+            tiles.forEach((t, idx) => {
+                if (minesArray[idx] && !t.classList.contains('revealed')) {
+                    t.classList.add('revealed');
+                    t.style.opacity = "0.5";
+                    t.innerText = "💣";
+                }
+            });
+
+            showToast(`Successfully cashed out ₹${winnings.toFixed(2)}!`, "🎉 YOU WON!");
+            resetControls();
+        }
+
+        function resetControls() {
+            let btn = document.getElementById('actionBtn');
+            btn.innerText = "START GAME";
+            btn.classList.remove('cashout');
+            document.getElementById('minesCount').disabled = false;
+            document.getElementById('betAmount').disabled = false;
+        }
+
+        function showToast(desc, title = "MINES") {
+            const box = document.getElementById('toastBox');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastDesc').innerText = desc;
+            box.classList.add('show');
+            setTimeout(() => box.classList.remove('show'), 2500);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOM TYRE - Live Casino</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #07090e;
+            color: #fff;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Top Bar */
+        .navbar {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(18, 24, 38, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a3447;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            background: linear-gradient(45deg, #f59e0b, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .user-info {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .balance-badge {
+            background: #1e293b;
+            border: 1px solid #f59e0b;
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: #f59e0b;
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: 6px;
+        }
+
+        /* Ticker Bar */
+        .ticker-bar {
+            width: 100%;
+            max-width: 450px;
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+            animation: marquee 12s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Video Frame */
+        .video-card {
+            width: 100%;
+            max-width: 380px;
+            height: 520px;
+            margin: 15px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #2a3447;
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(245, 158, 11, 0.15);
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .live-tag {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: #ef4444;
+            color: white;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 6px;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            z-index: 5;
+        }
+
+        .status-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            color: #22c55e;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 6px;
+            letter-spacing: 1px;
+            border: 1px solid #22c55e;
+            z-index: 5;
+        }
+
+        .status-tag.closed {
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* Spin Video Timer Overlay (Default hidden via JS/CSS control) */
+        .spin-timer-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid #f59e0b;
+            padding: 8px 20px;
+            border-radius: 30px;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: none; /* Default hidden */
+        }
+
+        .spin-timer-overlay span {
+            font-size: 14px;
+            font-weight: 800;
+            color: #fbbf24;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .spin-timer-overlay .timer-count {
+            background: #f59e0b;
+            color: #07090e;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        /* Active Bet Banner */
+        .placed-bet-info {
+            font-size: 13px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 5px;
+            min-height: 18px;
+        }
+
+        /* Chips */
+        .chips-title {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .chips-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 8px 0 10px 0;
+            flex-wrap: wrap;
+            max-width: 380px;
+        }
+
+        .chip {
+            background: #1e293b;
+            color: #cbd5e1;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid #334155;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .chip:hover, .chip.active {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: #fff;
+            border-color: #fbbf24;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .custom-chip {
+            width: 75px;
+            background: #0f172a;
+            color: #fff;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            outline: none;
+        }
+
+        /* Bet Buttons */
+        .color-btns {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 380px;
+            margin-bottom: 20px;
+        }
+
+        .btn-bet {
+            flex: 1;
+            padding: 14px 0;
+            border: none;
+            font-size: 14px;
+            border-radius: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-bet:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .multiplier {
+            display: block;
+            font-size: 10px;
+            opacity: 0.8;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(7, 9, 14, 0.95);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #121826;
+            padding: 35px 25px;
+            border-radius: 20px;
+            border: 1px solid #2a3447;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 310px;
+            text-align: center;
+        }
+
+        .modal-content input {
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+            background: #07090e;
+            color: white;
+            outline: none;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Toast / Winner Popup */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #121826;
+            padding: 14px 24px;
+            border-radius: 14px;
+            border: 2px solid #f59e0b;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            pointer-events: none;
+            width: 300px;
+        }
+
+        .toast-container.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #f59e0b;
+            text-transform: uppercase;
+        }
+
+        .toast-desc {
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .toast-container.loss-toast {
+            border-color: #ef4444;
+        }
+        .toast-container.loss-toast .toast-title {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <div class="brand-name">⚡ OOM TYRE</div>
+        <div class="user-info">
+            <span id="userDisp">Guest</span>
+            <span class="balance-badge">₹<span id="balDisp">0.00</span></span>
+        </div>
+    </div>
+
+    <div class="ticker-bar">
+        <div class="ticker-content" id="liveTicker">🔥 Waiting for live player winning streams...</div>
+    </div>
+
+    <div class="video-card">
+        <div class="live-tag">LIVE</div>
+        <div class="status-tag" id="statusTag">BETTING OPEN</div>
+        
+        <!-- Timer & Place Your Bet Overlay (Sirf Spin Video ke liye) -->
+        <div class="spin-timer-overlay" id="spinTimerOverlay">
+            <span>Place Your Bet</span>
+            <div class="timer-count" id="spinTimerCount">00s</div>
+        </div>
+
+        <video id="player" autoplay muted playsinline preload="auto"></video>
+    </div>
+
+    <div class="placed-bet-info" id="placedBetInfo"></div>
+
+    <div class="chips-title">Select Amount</div>
+    <div class="chips-container">
+        <div class="chip active" onclick="selectChip(100, this)">100</div>
+        <div class="chip" onclick="selectChip(200, this)">200</div>
+        <div class="chip" onclick="selectChip(500, this)">500</div>
+        <div class="chip" onclick="selectChip(1000, this)">1000</div>
+        <div class="chip" onclick="selectChip(2000, this)">2000</div>
+        <div class="chip" onclick="selectChip(5000, this)">5000</div>
+        <input type="number" id="customAmt" class="custom-chip" placeholder="Custom" oninput="setCustomChip(this.value)">
+    </div>
+
+    <div class="color-btns">
+        <button class="btn-bet btn-red" id="btnRed" onclick="placeBet('red')">
+            RED <span class="multiplier">2.5x WIN</span>
+        </button>
+        <button class="btn-bet btn-blue" id="btnBlue" onclick="placeBet('blue')">
+            BLUE <span class="multiplier">2.5x WIN</span>
+        </button>
+        <button class="btn-bet btn-green" id="btnGreen" onclick="placeBet('green')">
+            GREEN <span class="multiplier">2.5x WIN</span>
+        </button>
+    </div>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <h2 style="color: #f59e0b;">OOM TYRE</h2>
+            <p style="font-size: 12px; color: #64748b;">Enter details to enter game room</p>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button class="btn-login" onclick="doLogin()">LOGIN NOW</button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastBox">
+        <div class="toast-title" id="toastTitle">BET PLACED</div>
+        <div class="toast-desc" id="toastDesc">Success</div>
+    </div>
+
+    <script>
+        let selectedAmount = 100;
+        const player = document.getElementById('player');
+        let mode = 'spin';
+        let placedBets = []; 
+        let isSubmitting = false;
+        let toastTimer = null;
+        let nextOutcomeVideo = 'bluecenter.mp4';
+        let currentBalance = parseFloat(localStorage.getItem('userBalance') || '1000.00');
+        let spinTimerInterval = null;
+
+        player.muted = true;
+
+        function renderBetsUI() {
+            if (placedBets.length > 0) {
+                let summary = placedBets.map(b => `${b.color.toUpperCase()}: ₹${b.amount}`).join(' | ');
+                document.getElementById('placedBetInfo').innerText = `CURRENT BETS: ${summary}`;
+            } else {
+                document.getElementById('placedBetInfo').innerText = '';
+            }
+        }
+
+        function restorePlacedBet() {
+            const savedBets = localStorage.getItem('activeBetsList');
+            if (savedBets) {
+                try {
+                    placedBets = JSON.parse(savedBets);
+                } catch(e) {
+                    placedBets = [];
+                }
+            } else {
+                placedBets = [];
+            }
+            renderBetsUI();
+        }
+
+        function clearPlacedBet() {
+            placedBets = [];
+            localStorage.removeItem('activeBetsList');
+            renderBetsUI();
+        }
+
+        function setBetButtonsState(disabled) {
+            document.getElementById('btnRed').disabled = disabled;
+            document.getElementById('btnBlue').disabled = disabled;
+            document.getElementById('btnGreen').disabled = disabled;
+        }
+
+        function updateWalletUI(newBal) {
+            if (newBal !== undefined) {
+                currentBalance = parseFloat(newBal);
+            }
+            document.getElementById('balDisp').innerText = currentBalance.toFixed(2);
+            localStorage.setItem('userBalance', currentBalance.toString());
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateWalletUI(currentBalance);
+            restorePlacedBet();
+            
+            fetch('/get_game_state')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.balance !== undefined) {
+                        updateWalletUI(data.balance);
+                        document.getElementById('loginModal').style.display = 'none';
+                        let initialOutcome = data.outcome || (data.game && data.game.outcome) || 'bluecenter.mp4';
+                        let elapsedTime = data.elapsed_time || 0;
+                        startSpin(initialOutcome, elapsedTime);
+                    } else {
+                        document.getElementById('loginModal').style.display = 'flex';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('loginModal').style.display = 'flex';
+                });
+        });
+
+        function selectChip(amt, el) {
+            selectedAmount = Number(amt);
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('customAmt').value = '';
+        }
+
+        function setCustomChip(val) {
+            let parsed = parseFloat(val);
+            if(parsed > 0) {
+                selectedAmount = parsed;
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            }
+        }
+
+        function doLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: u, password: p})
+            }).then(res => res.json()).then(data => {
+                if(data.status === 'success') {
+                    document.getElementById('loginModal').style.display = 'none';
+                    document.getElementById('userDisp').innerText = data.username;
+                    if (data.balance !== undefined) updateWalletUI(data.balance);
+                    startSpin();
+                } else alert(data.message);
+            });
+        }
+
+        function placeBet(color) {
+            if (mode !== 'spin') {
+                showToast("Betting is closed for this round!", "CLOSED");
+                return;
+            }
+
+            if (isSubmitting) return;
+
+            isSubmitting = true;
+            let amountToBet = Number(selectedAmount) || 100;
+
+            if (currentBalance < amountToBet) {
+                showToast("Insufficient Balance!", "ERROR");
+                isSubmitting = false;
+                return;
+            }
+
+            fetch('/place_bet', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({color: color, amount: amountToBet})
+            }).then(res => res.json()).then(data => {
+                isSubmitting = false;
+                if(data.status === 'success') {
+                    placedBets.push({ color: color, amount: amountToBet });
+                    localStorage.setItem('activeBetsList', JSON.stringify(placedBets));
+                    
+                    renderBetsUI();
+                    showToast(`₹${amountToBet} placed on ${color.toUpperCase()}`, "BET CONFIRMED");
+
+                    if (data.new_balance !== undefined) updateWalletUI(data.new_balance);
+                } else {
+                    showToast(data.message || "Bet failed", "ERROR");
+                }
+            }).catch(() => {
+                isSubmitting = false;
+                showToast("Network error", "ERROR");
+            });
+        }
+
+        function startSpin(targetOutcome = null, elapsedTime = 0) {
+            mode = 'spin';
+            isSubmitting = false;
+
+            const tag = document.getElementById('statusTag');
+            tag.innerText = "BETTING OPEN";
+            tag.className = "status-tag";
+
+            setBetButtonsState(false);
+
+            let outcomeFile = targetOutcome || nextOutcomeVideo || 'bluecenter.mp4';
+            let cleanOutcomeName = outcomeFile.split('/').pop().replace('.mp4', '');
+            let spinVideoPath = `/spinvideos/spin${cleanOutcomeName}.mp4`;
+
+            player.muted = true;
+            player.src = spinVideoPath; 
+            
+            player.onloadedmetadata = function() {
+                if (elapsedTime > 0 && elapsedTime < player.duration) {
+                    player.currentTime = elapsedTime;
+                }
+                player.play().catch(e => console.log(e));
+                startSpinTimer(player.duration, elapsedTime);
+            };
+
+            player.load();
+            if (player.readyState >= 1) {
+                if (elapsedTime > 0 && elapsedTime < player.duration) {
+                    player.currentTime = elapsedTime;
+                }
+                player.play().catch(e => console.log(e));
+                startSpinTimer(player.duration, elapsedTime);
+            }
+        }
+
+        function startSpinTimer(totalDuration, elapsed = 0) {
+            const overlay = document.getElementById('spinTimerOverlay');
+            const timerCount = document.getElementById('spinTimerCount');
+            
+            // Sirf spin mode mein hi timer show karein
+            if (mode === 'spin') {
+                overlay.style.display = 'flex';
+            }
+
+            let remainingTime = Math.max(0, Math.ceil(totalDuration - elapsed));
+            
+            if (spinTimerInterval) clearInterval(spinTimerInterval);
+
+            spinTimerCount.innerText = (remainingTime < 10 ? "0" : "") + remainingTime + "s";
+
+            spinTimerInterval = setInterval(() => {
+                remainingTime = Math.max(0, Math.ceil(player.duration - player.currentTime));
+                spinTimerCount.innerText = (remainingTime < 10 ? "0" : "") + remainingTime + "s";
+
+                if (remainingTime <= 0 || player.ended) {
+                    clearInterval(spinTimerInterval);
+                    overlay.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        function getOutcomeVideoPath(outcomeVideo) {
+            let filename = outcomeVideo.split('/').pop().toLowerCase();
+            if (filename.startsWith('red')) return "/redvideos/" + filename;
+            if (filename.startsWith('blue')) return "/bluevideos/" + filename;
+            if (filename.startsWith('green')) return "/greenvideos/" + filename;
+            return "/spinvideos/" + filename;
+        }
+
+        player.onended = () => {
+            // Har haal mein timer aur overlay ko hide kar do video khatam hone par
+            if (spinTimerInterval) clearInterval(spinTimerInterval);
+            document.getElementById('spinTimerOverlay').style.display = 'none';
+
+            if (mode === 'spin') {
+                fetch('/get_game_state')
+                    .then(res => res.json())
+                    .then(data => {
+                        mode = 'outcome';
+
+                        // Outcome video aate hi timer ko dobara strictly hide kar rahe hain
+                        document.getElementById('spinTimerOverlay').style.display = 'none';
+
+                        const tag = document.getElementById('statusTag');
+                        tag.innerText = "BETTING CLOSED";
+                        tag.className = "status-tag closed";
+                        setBetButtonsState(true);
+                        
+                        let outcomeVideo = data.outcome || (data.game && data.game.outcome) || 'bluecenter.mp4';
+                        nextOutcomeVideo = outcomeVideo;
+
+                        if (data.balance !== undefined) updateWalletUI(data.balance);
+
+                        player.muted = true;
+                        player.src = getOutcomeVideoPath(outcomeVideo);
+                        player.load();
+                        player.play().catch(e => console.error("Outcome video failed:", e));
+                    })
+                    .catch(() => startSpin());
+            } 
+            else {
+                let winningColor = "BLUE";
+                let currentOutcomeFile = nextOutcomeVideo.toLowerCase();
+
+                if (currentOutcomeFile.includes('red')) winningColor = "RED";
+                else if (currentOutcomeFile.includes('green')) winningColor = "GREEN";
+                else if (currentOutcomeFile.includes('blue')) winningColor = "BLUE";
+
+                let totalWon = 0;
+                let totalLost = 0;
+                let winningBetAmount = 0;
+
+                if (placedBets.length > 0) {
+                    placedBets.forEach(b => {
+                        if (currentOutcomeFile.includes(b.color.toLowerCase())) {
+                            totalWon += b.amount * 2.5;
+                            winningBetAmount += b.amount; 
+                        } else {
+                            totalLost += b.amount;
+                        }
+                    });
+                }
+
+                if (winningBetAmount > 0) {
+                    fetch('/api/claim_win', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bet_amount: winningBetAmount })
+                    })
+                    .then(res => res.json())
+                    .then(response => {
+                        if(response.status === 'success') {
+                            updateWalletUI(response.new_balance);
+                            console.log("Jeete hue paise add ho gaye:", response.payout);
+                        }
+                    }).catch(err => console.log("Claim win error:", err));
+                }
+
+                let resultDesc = `WINNER WAS ${winningColor}!`;
+                let isLoss = false;
+
+                if (placedBets.length > 0) {
+                    if (totalWon > 0) {
+                        resultDesc = `🏆 ${winningColor} WON! Total Payout: ₹${totalWon.toFixed(2)}`;
+                    } else {
+                        resultDesc = `❌ ${winningColor} WON! Total Lost: ₹${totalLost.toFixed(2)}`;
+                        isLoss = true;
+                    }
+                }
+
+                showToast(resultDesc, `ROUND RESULT: ${winningColor}`, isLoss);
+                
+                clearPlacedBet();
+                startSpin(nextOutcomeVideo);
+            }
+        };
+
+        function showToast(desc, title = "GAME STATUS", isLoss = false) {
+            const box = document.getElementById('toastBox');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastDesc').innerText = desc;
+            
+            if (isLoss) box.classList.add('loss-toast');
+            else box.classList.remove('loss-toast');
+
+            box.classList.add('show');
+
+            if(toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                box.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateLiveActivityTicker() {
+            fetch('/api/live_activity')
+                .then(res => res.json())
+                .then(data => {
+                    if(data.message) document.getElementById('liveTicker').innerText = data.message;
+                })
+                .catch(() => {});
+        }
+
+        setInterval(updateLiveActivityTicker, 4000);
+        updateLiveActivityTicker();
+    </script>
+</body>
+</html>

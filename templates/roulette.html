@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOXIE WEARS - Luxury Nautical Roulette</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #050b14;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Top Bar */
+        .navbar {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(10, 15, 28, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            background: #0f172a;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            border-color: #38bdf8;
+        }
+
+        .brand-name {
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #f59e0b, #d4af37, #fef08a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .wallet-display {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Arena Header */
+        .arena-header {
+            background: #0d1526;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 14px;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .timer-box {
+            font-size: 15px;
+            font-weight: 900;
+            color: #34d399;
+        }
+
+        /* Wheel Container */
+        .wheel-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 5px auto;
+            background: #020617;
+            border-radius: 50%;
+            border: 6px solid #d4af37;
+            box-shadow: 0 0 35px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .roulette-wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: absolute;
+            transition: transform 3.5s cubic-bezier(0.15, 0.85, 0.15, 1);
+        }
+
+        .wheel-center {
+            width: 58px;
+            height: 58px;
+            background: #070e1a;
+            border: 3px solid #d4af37;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+            color: #fef08a;
+            box-shadow: 0 0 15px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        .roulette-ball {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            z-index: 8;
+            box-shadow: 0 0 10px #ffffff, inset 0 0 2px #000;
+            top: 14px;
+            left: calc(50% - 4px);
+            transform-origin: 50% 116px;
+            transition: transform 3.5s cubic-bezier(0.15, 0.85, 0.15, 1);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -5px;
+            z-index: 10;
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-bottom: 14px solid #d4af37;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+        }
+
+        /* Popup Banners */
+        .popup-banner, .result-banner {
+            display: none;
+            background: rgba(13, 21, 38, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+
+        .popup-banner { border: 2px solid #38bdf8; }
+        .result-banner { border: 2px solid #d4af37; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .popup-banner h3 { font-size: 14px; color: #38bdf8; margin-bottom: 3px; }
+        .popup-banner p { font-size: 12px; font-weight: bold; color: #fff; }
+
+        .result-banner h3 { font-size: 14px; color: #fbbf24; margin-bottom: 3px; }
+        .result-banner p { font-size: 12px; font-weight: bold; }
+        .profit-text { color: #34d399; }
+        .loss-text { color: #f87171; }
+
+        /* Chip Selector */
+        .chip-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 4px 0;
+        }
+
+        .chip {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 255, 255, 0.6);
+            background: #0f172a;
+            color: #fff;
+            font-weight: 800;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .chip.active {
+            border-color: #d4af37;
+            background: linear-gradient(135deg, #b45309, #d97706);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Betting Table */
+        .betting-table {
+            background: #0d1526;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .table-title {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .color-btn {
+            padding: 11px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border: 1px solid #334155;
+            color: white;
+            text-align: center;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .color-btn.red-bet { background: #991b1b; border-color: #ef4444; }
+        .color-btn.black-bet { background: #1e293b; border-color: #475569; }
+
+        .range-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .range-btn {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            padding: 8px 4px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            max-height: 130px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .num-btn {
+            background: #0b1120;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 9px 0;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .num-btn.red { background: #991b1b; border-color: #ef4444; }
+        .num-btn.black { background: #1e293b; border-color: #475569; }
+        .num-btn.green { background: #065f46; border-color: #10b981; grid-column: span 6; }
+
+        .num-btn:hover, .range-btn:hover, .color-btn:hover {
+            border-color: #d4af37;
+        }
+
+        .bet-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #d4af37;
+            color: #050b14;
+            font-size: 8px;
+            font-weight: 900;
+            padding: 2px 5px;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            z-index: 5;
+        }
+
+        /* Action Row */
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 11px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+
+        .btn-clear { background: #b91c1c; color: white; }
+        .btn-clear:hover { background: #dc2626; }
+        .btn-place { background: linear-gradient(135deg, #d4af37, #f59e0b); color: #050b14; }
+        .btn-place:hover { filter: brightness(1.1); }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <a href="/" class="back-btn">⬅ LOBBY</a>
+        <div class="brand-name">⚓ MOXIE ROULETTE</div>
+        <div class="wallet-display" id="walletDisplay">₹ 0.00</div>
+    </div>
+
+    <div class="container">
+        
+        <!-- ARENA HEADER -->
+        <div class="arena-header">
+            <div class="status-badge" id="gameStatus">BETTING OPEN</div>
+            <div class="timer-box" id="timerBox">15s</div>
+        </div>
+
+        <!-- WHEEL -->
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <div class="roulette-wheel" id="rouletteWheel"></div>
+            <div class="roulette-ball" id="rouletteBall"></div>
+            <div class="wheel-center" id="wheelCenterText">MOXIE<br>WEARS</div>
+        </div>
+
+        <!-- BET LOCK POPUP BANNER -->
+        <div class="popup-banner" id="lockBanner">
+            <h3>🔒 BETS LOCKED SUCCESSFULLY</h3>
+            <p id="lockDesc">Total Bet: ₹0.00</p>
+        </div>
+
+        <!-- PROFIT / LOSS POPUP BANNER -->
+        <div class="result-banner" id="resultBanner">
+            <h3 id="resultTitle">WINNER: 14 RED</h3>
+            <p id="resultDesc">Profit: +₹500.00</p>
+        </div>
+
+        <!-- CHIP SELECTOR -->
+        <div class="chip-selector">
+            <div class="chip active" onclick="selectChip(100, this)">₹100</div>
+            <div class="chip" onclick="selectChip(500, this)">₹500</div>
+            <div class="chip" onclick="selectChip(1000, this)">₹1K</div>
+            <div class="chip" onclick="selectChip(5000, this)">₹5K</div>
+        </div>
+
+        <!-- BETTING TABLE -->
+        <div class="betting-table">
+            <div class="table-title">🎨 Red / Black Bets (1.8x Payout)</div>
+            <div class="color-grid">
+                <button class="color-btn red-bet" id="bet_red" onclick="placeBetOnTarget('red')">RED (1.8x)</button>
+                <button class="color-btn black-bet" id="bet_black" onclick="placeBetOnTarget('black')">BLACK (1.8x)</button>
+            </div>
+
+            <div class="table-title" style="margin-top: 4px;">📊 Ranges & Dozens (Optimized)</div>
+            <div class="range-grid">
+                <button class="range-btn" id="bet_range_1_9" onclick="placeBetOnTarget('range_1_9')">1-9</button>
+                <button class="range-btn" id="bet_range_10_18" onclick="placeBetOnTarget('range_10_18')">10-18</button>
+                <button class="range-btn" id="bet_range_19_27" onclick="placeBetOnTarget('range_19_27')">19-27</button>
+                <button class="range-btn" id="bet_range_28_36" onclick="placeBetOnTarget('range_28_36')">28-36</button>
+                <button class="range-btn" id="bet_dozen_1" onclick="placeBetOnTarget('dozen_1')">1-12</button>
+                <button class="range-btn" id="bet_dozen_2" onclick="placeBetOnTarget('dozen_2')">13-24</button>
+                <button class="range-btn" id="bet_dozen_3" onclick="placeBetOnTarget('dozen_3')">25-36</button>
+                <button class="range-btn" id="bet_even" onclick="placeBetOnTarget('even')">EVEN (1.8x)</button>
+            </div>
+
+            <div class="table-title" style="margin-top: 4px;">🔢 Single Numbers (0 - 36)</div>
+            <div class="numbers-grid" id="numbersGrid"></div>
+
+            <div class="action-row">
+                <button class="btn-action btn-clear" onclick="clearBets()">Clear Bets</button>
+                <button class="btn-action btn-place" onclick="confirmBets()">Lock Bets</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Check both 'userBalance' and 'balance' keys for compatibility with other pages
+        let savedBalance = localStorage.getItem('userBalance') || localStorage.getItem('balance');
+        let currentBalance = (savedBalance !== null && !isNaN(parseFloat(savedBalance))) ? parseFloat(savedBalance) : 10000.00;
+
+        let selectedChipValue = 100;
+        let activeBets = {};
+        let lockedBets = {};
+        let gameState = 'betting';
+        let currentWheelRotation = 0;
+        let currentBallRotation = 0;
+
+        const wheelOrder = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+        const redNumbers = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+        const CYCLE_TIME = 22000;
+
+        window.onload = function() {
+            updateWalletUI();
+            buildWheelGraphics();
+            buildNumberGrid();
+            startSyncedGameLoop();
+        };
+
+        function updateWalletUI() {
+            if (isNaN(currentBalance)) currentBalance = 10000.00;
+            document.getElementById('walletDisplay').innerText = `₹ ${currentBalance.toFixed(2)}`;
+            // Save to both keys so lobby and other pages never lose track of balance
+            localStorage.setItem('userBalance', currentBalance.toString());
+            localStorage.setItem('balance', currentBalance.toString());
+            
+            // Naya balance server par bhejne ke liye yeh function call karein
+            updateServerBalance(currentBalance);
+        }
+
+        // Server par balance sync karne ke liye function
+        async function updateServerBalance(newBalance) {
+            try {
+                await fetch('/api/update-balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ balance: newBalance })
+                });
+            } catch (err) {
+                console.error("Failed to sync balance to server:", err);
+            }
+        }
+
+        function selectChip(val, element) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            selectedChipValue = val;
+        }
+
+        function buildWheelGraphics() {
+            const wheel = document.getElementById('rouletteWheel');
+            wheel.innerHTML = '';
+            
+            let svgNS = "http://www.w3.org/2000/svg";
+            let svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 260 260");
+
+            let cx = 130, cy = 130, outerR = 120, innerR = 42;
+            let sliceAngle = 360 / 37;
+
+            wheelOrder.forEach((num, index) => {
+                let startAngle = index * sliceAngle - 90 - (sliceAngle / 2);
+                let endAngle = (index + 1) * sliceAngle - 90 - (sliceAngle / 2);
+                let color = num === 0 ? '#065f46' : (redNumbers.includes(num) ? '#991b1b' : '#0b1120');
+
+                let rad1 = (startAngle * Math.PI) / 180;
+                let rad2 = (endAngle * Math.PI) / 180;
+
+                let x1 = cx + outerR * Math.cos(rad1);
+                let y1 = cy + outerR * Math.sin(rad1);
+                let x2 = cx + outerR * Math.cos(rad2);
+                let y2 = cy + outerR * Math.sin(rad2);
+
+                let ix1 = cx + innerR * Math.cos(rad2);
+                let iy1 = cy + innerR * Math.sin(rad2);
+                let ix2 = cx + innerR * Math.cos(rad1);
+                let iy2 = cy + innerR * Math.sin(rad1);
+
+                let largeArc = sliceAngle > 180 ? 1 : 0;
+                let pathData = `M ${ix2} ${iy2} L ${x1} ${y1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix2} ${iy2} Z`;
+
+                let path = document.createElementNS(svgNS, "path");
+                path.setAttribute("d", pathData);
+                path.setAttribute("fill", color);
+                path.setAttribute("stroke", "#d4af37");
+                path.setAttribute("stroke-width", "0.6");
+                svg.appendChild(path);
+
+                let midAngle = (startAngle + endAngle) / 2;
+                let midRad = (midAngle * Math.PI) / 180;
+                let textR = (outerR + innerR) / 2 + 2;
+                let tx = cx + textR * Math.cos(midRad);
+                let ty = cy + textR * Math.sin(midRad);
+
+                let text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", tx);
+                text.setAttribute("y", ty);
+                text.setAttribute("fill", "#ffffff");
+                text.setAttribute("font-size", "8.5px");
+                text.setAttribute("font-weight", "900");
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("dominant-baseline", "central");
+                text.setAttribute("transform", `rotate(${midAngle + 90}, ${tx}, ${ty})`);
+                text.textContent = num;
+                svg.appendChild(text);
+            });
+
+            wheel.appendChild(svg);
+        }
+
+        function buildNumberGrid() {
+            const grid = document.getElementById('numbersGrid');
+            let zeroBtn = document.createElement('button');
+            zeroBtn.className = 'num-btn green';
+            zeroBtn.id = 'bet_0';
+            zeroBtn.innerText = '0 (ZERO)';
+            zeroBtn.onclick = () => addBet('0');
+            grid.appendChild(zeroBtn);
+
+            for(let i = 1; i <= 36; i++) {
+                let btn = document.createElement('button');
+                let isRed = redNumbers.includes(i);
+                btn.className = `num-btn ${isRed ? 'red' : 'black'}`;
+                btn.id = `bet_${i}`;
+                btn.innerText = i;
+                btn.onclick = () => addBet(i.toString());
+                grid.appendChild(btn);
+            }
+        }
+
+        function addBet(target) {
+            let elapsed = Date.now() % CYCLE_TIME;
+            if (elapsed >= 13000) {
+                alert("Bets locked for this round! Wait for next round.");
+                return;
+            }
+            if (currentBalance < selectedChipValue) {
+                alert("Insufficient balance!");
+                return;
+            }
+
+            currentBalance -= selectedChipValue;
+            activeBets[target] = (activeBets[target] || 0) + selectedChipValue;
+            updateWalletUI();
+            renderBetBadges();
+        }
+
+        function placeBetOnTarget(target) {
+            addBet(target);
+        }
+
+        function renderBetBadges() {
+            document.querySelectorAll('.bet-badge').forEach(b => b.remove());
+            for(let target in activeBets) {
+                let el = document.getElementById(`bet_${target}`);
+                if(el) {
+                    let badge = document.createElement('span');
+                    badge.className = 'bet-badge';
+                    badge.innerText = activeBets[target];
+                    el.style.position = 'relative';
+                    el.appendChild(badge);
+                }
+            }
+        }
+
+        function clearBets() {
+            let elapsed = Date.now() % CYCLE_TIME;
+            if (elapsed >= 13000) return;
+            let refund = Object.values(activeBets).reduce((a, b) => a + b, 0);
+            currentBalance += refund;
+            activeBets = {};
+            updateWalletUI();
+            document.querySelectorAll('.bet-badge').forEach(b => b.remove());
+            document.getElementById('lockBanner').style.display = 'none';
+        }
+
+        function confirmBets() {
+            if(Object.keys(activeBets).length === 0) {
+                alert("Please place a bet first!");
+                return;
+            }
+            lockedBets = {...activeBets};
+            
+            let totalLocked = Object.values(lockedBets).reduce((a, b) => a + b, 0);
+            document.getElementById('lockDesc').innerText = `Total Locked Amount: ₹${totalLocked.toFixed(2)}`;
+            document.getElementById('lockBanner').style.display = 'block';
+        }
+
+        function startSyncedGameLoop() {
+            setInterval(() => {
+                let now = Date.now();
+                let elapsed = now % CYCLE_TIME;
+
+                if (elapsed < 13000) {
+                    gameState = 'betting';
+                    let timeLeft = Math.ceil((13000 - elapsed) / 1000);
+                    document.getElementById('gameStatus').innerText = 'BETTING OPEN';
+                    document.getElementById('gameStatus').style.color = '#fbbf24';
+                    document.getElementById('timerBox').innerText = `${timeLeft}s`;
+                    document.getElementById('resultBanner').style.display = 'none';
+
+                } else if (elapsed < 18000) {
+                    if (gameState !== 'spinning') {
+                        gameState = 'spinning';
+                        document.getElementById('gameStatus').innerText = 'SPINNING...';
+                        document.getElementById('gameStatus').style.color = '#f87171';
+                        document.getElementById('timerBox').innerText = '0s';
+                        document.getElementById('lockBanner').style.display = 'none';
+                        document.getElementById('resultBanner').style.display = 'none';
+
+                        if(Object.keys(activeBets).length > 0 && Object.keys(lockedBets).length === 0) {
+                            lockedBets = {...activeBets};
+                        }
+
+                        let roundSeed = Math.floor(now / CYCLE_TIME);
+                        let winningNum = wheelOrder[roundSeed % wheelOrder.length];
+                        let winningIndex = wheelOrder.indexOf(winningNum);
+                        let sliceAngle = 360 / 37;
+
+                        let targetOffset = (360 - (winningIndex * sliceAngle)) % 360;
+                        let currentMod = currentWheelRotation % 360;
+                        let diff = targetOffset - currentMod;
+                        if (diff <= 0) diff += 360;
+                        let wheelSpin = (360 * 6) + diff;
+                        currentWheelRotation += wheelSpin;
+
+                        let targetBallRotation = currentWheelRotation + (winningIndex * sliceAngle) - (360 * 10);
+                        while (targetBallRotation >= currentBallRotation) {
+                            targetBallRotation -= 360;
+                        }
+                        currentBallRotation = targetBallRotation;
+
+                        document.getElementById('rouletteWheel').style.transform = `rotate(${currentWheelRotation}deg)`;
+                        document.getElementById('rouletteBall').style.transform = `rotate(${currentBallRotation}deg)`;
+                    }
+
+                } else {
+                    if (gameState !== 'result') {
+                        gameState = 'result';
+                        document.getElementById('gameStatus').innerText = 'RESULT OUT';
+                        document.getElementById('gameStatus').style.color = '#34d399';
+                        document.getElementById('lockBanner').style.display = 'none';
+
+                        let roundSeed = Math.floor(now / CYCLE_TIME);
+                        let winningNum = wheelOrder[roundSeed % wheelOrder.length];
+                        let isRed = redNumbers.includes(winningNum);
+                        let colorName = winningNum === 0 ? 'GREEN' : (isRed ? 'RED' : 'BLACK');
+
+                        let totalBetAmount = Object.values(lockedBets).reduce((a, b) => a + b, 0);
+                        let actualPayout = 0;
+
+                        for(let target in lockedBets) {
+                            let amt = lockedBets[target];
+                            if(target === winningNum.toString()) {
+                                actualPayout += amt * 32;
+                            } else if(target === 'red' && isRed) {
+                                actualPayout += amt * 1.8;
+                            } else if(target === 'black' && !isRed && winningNum !== 0) {
+                                actualPayout += amt * 1.8;
+                            } else if(target === 'even' && winningNum > 0 && winningNum % 2 === 0) {
+                                actualPayout += amt * 1.8;
+                            } else if(target.startsWith('range_') || target.startsWith('dozen_')) {
+                                actualPayout += amt * 2.7;
+                            }
+                        }
+
+                        let netProfitLoss = actualPayout - totalBetAmount;
+
+                        if(actualPayout > 0) {
+                            currentBalance += actualPayout;
+                            document.getElementById('resultTitle').innerText = `WINNER: ${winningNum} (${colorName})`;
+                            document.getElementById('resultDesc').innerHTML = `Profit: <span class="profit-text">+₹${netProfitLoss.toFixed(2)}</span>`;
+                        } else if(totalBetAmount > 0) {
+                            document.getElementById('resultTitle').innerText = `WINNER: ${winningNum} (${colorName})`;
+                            document.getElementById('resultDesc').innerHTML = `Loss: <span class="loss-text">-₹${totalBetAmount.toFixed(2)}</span>`;
+                        } else {
+                            document.getElementById('resultTitle').innerText = `WINNER: ${winningNum} (${colorName})`;
+                            document.getElementById('resultDesc').innerText = `No bets placed this round.`;
+                        }
+
+                        updateWalletUI();
+                        document.getElementById('resultBanner').style.display = 'block';
+
+                        activeBets = {};
+                        lockedBets = {};
+                        document.querySelectorAll('.bet-badge').forEach(b => b.remove());
+                    }
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>

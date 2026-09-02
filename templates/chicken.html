@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOM CASINO - Chicken Road Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #07090e;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .navbar {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(18, 24, 38, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a3447;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .wallet-display {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .arena-header {
+            background: #121826;
+            border: 1px solid #2a3447;
+            border-radius: 14px;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .multiplier-display {
+            font-size: 18px;
+            font-weight: 900;
+            color: #f59e0b;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+
+        .road-container {
+            position: relative;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #334155;
+            border-radius: 16px;
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .road-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            height: 100%;
+            justify-content: space-around;
+        }
+
+        .road-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed #334155;
+            border-radius: 8px;
+            padding: 4px 12px;
+            transition: 0.3s;
+        }
+
+        .road-row.active-row {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
+
+        .road-row.passed {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .row-level {
+            font-size: 11px;
+            font-weight: bold;
+            color: #94a3b8;
+        }
+
+        .row-multi {
+            font-size: 13px;
+            font-weight: 900;
+            color: #38bdf8;
+        }
+
+        .chicken-avatar {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.2s;
+            z-index: 10;
+            filter: drop-shadow(0 5px 8px rgba(0,0,0,0.7));
+            animation: bounceIdle 1.5s infinite ease-in-out;
+        }
+
+        @keyframes bounceIdle {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        .chicken-avatar.walking {
+            animation: walkAnim 0.3s infinite alternate;
+        }
+
+        @keyframes walkAnim {
+            0% { transform: translateX(-50%) rotate(-5deg) scale(1.1); }
+            100% { transform: translateX(-50%) rotate(5deg) scale(1.1); }
+        }
+
+        .popup-banner {
+            display: none;
+            background: rgba(18, 24, 38, 0.98);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .popup-banner h3 { font-size: 16px; color: #fbbf24; margin-bottom: 4px; }
+        .popup-banner p { font-size: 14px; font-weight: bold; }
+        .profit-text { color: #10b981; }
+        .loss-text { color: #ef4444; }
+
+        .controls-panel {
+            background: #121826;
+            border: 1px solid #2a3447;
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bet-input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        .bet-input-row label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #94a3b8;
+        }
+
+        .bet-input-row input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 900;
+            width: 100px;
+            text-align: right;
+            outline: none;
+        }
+
+        .quick-chips {
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+        }
+
+        .chip-btn {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 6px 0;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .chip-btn:hover {
+            border-color: #f59e0b;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: 0.2s;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-step {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+            display: none;
+        }
+
+        .btn-cashout {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            display: none;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="/lobby" class="back-btn" id="lobbyBtn">⬅ LOBBY</a>
+        <div class="brand-name">🐓 CHICKEN RUN</div>
+        <div class="wallet-display" id="walletDisplay">₹ 0.00</div>
+    </div>
+
+    <div class="container">
+        <div class="arena-header">
+            <div style="font-size: 12px; font-weight: bold; color: #94a3b8;">CURRENT MULTIPLIER</div>
+            <div class="multiplier-display" id="currentMultiplierDisplay">1.00x</div>
+        </div>
+
+        <div class="road-container" id="roadContainer">
+            <div class="road-grid" id="roadGrid"></div>
+            <div class="chicken-avatar" id="chicken">🐔</div>
+        </div>
+
+        <div class="popup-banner" id="resultBanner">
+            <h3 id="resultTitle">ROUND WON!</h3>
+            <p id="resultDesc">You cashed out: +₹500.00</p>
+        </div>
+
+        <div class="controls-panel">
+            <div class="bet-input-row">
+                <label>BET AMOUNT (₹)</label>
+                <input type="number" id="betAmountInput" value="100">
+            </div>
+
+            <div class="quick-chips">
+                <button class="chip-btn" onclick="setBet(50)">+50</button>
+                <button class="chip-btn" onclick="setBet(100)">+100</button>
+                <button class="chip-btn" onclick="setBet(500)">+500</button>
+                <button class="chip-btn" onclick="setBet(1000)">+1K</button>
+                <button class="chip-btn" onclick="setMaxBet()">MAX</button>
+            </div>
+
+            <button class="action-btn btn-start" id="startBtn" onclick="startGame()">Start Game</button>
+            <button class="action-btn btn-step" id="stepBtn" onclick="makeStep()">Step Forward 🐾</button>
+            <button class="action-btn btn-cashout" id="cashoutBtn" onclick="cashOut()">Cash Out 💰</button>
+        </div>
+    </div>
+
+    <script>
+        let currentBalance = parseFloat(localStorage.getItem('userBalance'));
+        if (isNaN(currentBalance)) {
+            currentBalance = 1000.00;
+            localStorage.setItem('userBalance', currentBalance.toString());
+        }
+
+        let currentBet = 100;
+        let gameActive = false;
+        let currentStep = -1;
+        const totalSteps = 6;
+        const multipliers = [1.25, 1.55, 2.00, 2.80, 4.00, 6.00];
+
+        window.onload = function() {
+            updateWalletUI();
+            buildRoad();
+        };
+
+        function updateWalletUI() {
+            document.getElementById('walletDisplay').innerText = `₹ ${currentBalance.toFixed(2)}`;
+            localStorage.setItem('userBalance', currentBalance.toString());
+        }
+
+        // Real API call to sync balance with Flask backend
+        async function syncBalanceWithServer(newBalance) {
+            try {
+                let response = await fetch('/api/update-balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ balance: newBalance })
+                });
+                
+                let data = await response.json();
+                if (!data.success) {
+                    console.error("Server rejected balance update");
+                }
+            } catch (err) {
+                console.error("Failed to sync balance with server:", err);
+            }
+        }
+
+        function setBet(amount) {
+            if (gameActive) return;
+            currentBet = amount;
+            document.getElementById('betAmountInput').value = currentBet;
+        }
+
+        function setMaxBet() {
+            if (gameActive) return;
+            currentBet = currentBalance;
+            document.getElementById('betAmountInput').value = currentBet;
+        }
+
+        function buildRoad() {
+            const grid = document.getElementById('roadGrid');
+            grid.innerHTML = '';
+            for(let i = totalSteps - 1; i >= 0; i--) {
+                let row = document.createElement('div');
+                row.className = 'road-row';
+                row.id = `row_${i}`;
+                row.innerHTML = `
+                    <span class="row-level">LEVEL ${i + 1}</span>
+                    <span class="row-multi">${multipliers[i]}x Payout</span>
+                `;
+                grid.appendChild(row);
+            }
+        }
+
+        function startGame() {
+            currentBet = parseFloat(document.getElementById('betAmountInput').value);
+
+            if(isNaN(currentBet) || currentBet <= 0) {
+                alert("Sahi bet amount daalo bhai!");
+                return;
+            }
+            if(currentBalance < currentBet) {
+                alert("Balance kam hai bhai!");
+                return;
+            }
+
+            currentBalance -= currentBet;
+            updateWalletUI();
+            syncBalanceWithServer(currentBalance);
+
+            gameActive = true;
+            currentStep = -1;
+            
+            document.getElementById('resultBanner').style.display = 'none';
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stepBtn').style.display = 'block';
+            document.getElementById('cashoutBtn').style.display = 'block';
+            document.getElementById('currentMultiplierDisplay').innerText = '1.00x';
+
+            document.querySelectorAll('.road-row').forEach(r => {
+                r.classList.remove('active-row', 'passed');
+            });
+
+            updateChickenPosition();
+        }
+
+        function makeStep() {
+            if (!gameActive) return;
+
+            currentStep++;
+            updateChickenPosition();
+
+            let hitBone = (Math.random() < 0.18) && (currentStep < totalSteps - 1);
+
+            if (hitBone) {
+                document.getElementById('chicken').innerText = '🦴💥';
+                endGame(false, 0);
+            } else if (currentStep === totalSteps - 1) {
+                let payout = currentBet * multipliers[currentStep];
+                currentBalance += payout;
+                document.getElementById('chicken').innerText = '🏆🐔';
+                endGame(true, payout);
+            } else {
+                let currentMulti = multipliers[currentStep];
+                document.getElementById('currentMultiplierDisplay').innerText = `${currentMulti}x`;
+            }
+        }
+
+        function cashOut() {
+            if (!gameActive || currentStep < 0) return;
+
+            let payout = currentBet * multipliers[currentStep];
+            currentBalance += payout;
+            document.getElementById('chicken').innerText = '🏆🐔';
+            endGame(true, payout);
+        }
+
+        function updateChickenPosition() {
+            let chicken = document.getElementById('chicken');
+            chicken.classList.add('walking');
+            setTimeout(() => chicken.classList.remove('walking'), 400);
+
+            let bottomPx = 15 + (currentStep + 1) * 45;
+            chicken.style.bottom = `${bottomPx}px`;
+
+            document.querySelectorAll('.road-row').forEach((r, idx) => {
+                let rowIdx = totalSteps - 1 - idx;
+                r.classList.remove('active-row');
+                if (rowIdx === currentStep + 1) {
+                    r.classList.add('active-row');
+                } else if (rowIdx <= currentStep) {
+                    r.classList.add('passed');
+                }
+            });
+        }
+
+        function endGame(won, payout) {
+            gameActive = false;
+            document.getElementById('stepBtn').style.display = 'none';
+            document.getElementById('cashoutBtn').style.display = 'none';
+            document.getElementById('startBtn').style.display = 'block';
+
+            let resultTitle = document.getElementById('resultTitle');
+            let resultDesc = document.getElementById('resultDesc');
+
+            if (won) {
+                let profit = payout - currentBet;
+                resultTitle.innerText = "🎉 AMAZING WIN!";
+                resultDesc.innerHTML = `Cashed out successfully! Profit: <span class="profit-text">+₹${profit.toFixed(2)}</span>`;
+            } else {
+                resultTitle.innerText = "💥 OUCH! BONE HIT";
+                resultDesc.innerHTML = `You lost your bet: <span class="loss-text">-₹${currentBet.toFixed(2)}</span>`;
+            }
+
+            updateWalletUI();
+            syncBalanceWithServer(currentBalance);
+            document.getElementById('resultBanner').style.display = 'block';
+
+            setTimeout(() => {
+                document.getElementById('chicken').innerText = '🐔';
+                document.getElementById('chicken').style.bottom = '15px';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

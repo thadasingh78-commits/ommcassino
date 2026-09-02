@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OOM CASINO - Lobby</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #07090e;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Top Bar */
+        .navbar {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(18, 24, 38, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a3447;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .brand-name {
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            background: linear-gradient(45deg, #f59e0b, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        /* User Header / Action Container */
+        .user-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Dynamic Wallet Button */
+        .wallet-btn {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .wallet-btn:hover {
+            transform: scale(1.03);
+        }
+
+        /* Logout Button Style */
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            display: none; /* Hidden by default when logged out */
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 15px;
+        }
+
+        /* Hero Banner */
+        .banner {
+            width: 100%;
+            background: linear-gradient(135deg, #1e1b4b, #311b92);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #4338ca;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .banner h2 {
+            font-size: 20px;
+            color: #fbbf24;
+            margin-bottom: 5px;
+        }
+
+        .banner p {
+            font-size: 12px;
+            color: #c7d2fe;
+        }
+
+        /* Game Grid */
+        .section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .game-card {
+            background: #121826;
+            border: 1px solid #2a3447;
+            border-radius: 14px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: #f59e0b;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .game-icon {
+            font-size: 38px;
+            margin-bottom: 8px;
+        }
+
+        .game-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .game-tag {
+            font-size: 10px;
+            background: #1e293b;
+            color: #38bdf8;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .hot-tag {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ef4444;
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Login Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(7, 9, 14, 0.95);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #121826;
+            padding: 30px 25px;
+            border-radius: 20px;
+            border: 1px solid #2a3447;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 310px;
+            text-align: center;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .modal-content h2 {
+            font-size: 20px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #f59e0b, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-content input {
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+            background: #07090e;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .modal-content input:focus {
+            border-color: #f59e0b;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 12px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <div class="brand-name">⚡ OOM CASINO</div>
+        <div class="user-header-actions">
+            <button class="wallet-btn" id="userWalletBtn" onclick="handleWalletClick()">
+                <span>🔑</span> LOGIN
+            </button>
+            <button class="logout-btn" id="logoutBtn" onclick="doLogout()">
+                <span>🚪</span> Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- BANNER -->
+        <div class="banner">
+            <h2>WELCOME TO OOM CASINO</h2>
+            <p>Select your favorite game & start winning now!</p>
+        </div>
+
+        <!-- GAMES GRID -->
+        <div class="section-title">🔥 Popular Games</div>
+        <div class="game-grid">
+            
+            <div class="game-card" onclick="playGame('tyre')">
+                <span class="hot-tag">LIVE</span>
+                <div class="game-icon">🎡</div>
+                <div class="game-title">OOM Tyre</div>
+                <div class="game-tag">Live Wheel</div>
+            </div>
+
+            <div class="game-card" onclick="playGame('aviator')">
+                <span class="hot-tag">HOT</span>
+                <div class="game-icon">🚀</div>
+                <div class="game-title">Aviator</div>
+                <div class="game-tag">Crash Game</div>
+            </div>
+
+            <!-- Colour Trading -->
+            <div class="game-card" onclick="playGame('parity')">
+                <div class="game-icon">🎨</div>
+                <div class="game-title">Colour Trading</div>
+                <div class="game-tag">Color Win</div>
+            </div>
+
+            <div class="game-card" onclick="playGame('mines')">
+                <div class="game-icon">💣</div>
+                <div class="game-title">Mines</div>
+                <div class="game-tag">Strategy</div>
+            </div>
+
+            <div class="game-card" onclick="playGame('chicken')">
+                <div class="game-icon">🐔</div>
+                <div class="game-title">Chicken Road</div>
+                <div class="game-tag">Multiplier</div>
+            </div>
+
+            <!-- Roulette -->
+            <div class="game-card" onclick="playGame('roulette')">
+                <div class="game-icon">🎯</div>
+                <div class="game-title">Roulette</div>
+                <div class="game-tag">Classic Wheel</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeLogin()">&times;</span>
+            <h2>USER LOGIN</h2>
+            <p style="font-size: 12px; color: #64748b;">Enter details provided by Admin</p>
+            <input type="text" id="username" placeholder="Telegram ID / Username">
+            <input type="password" id="password" placeholder="Password">
+            <div class="error-msg" id="loginError">Invalid ID or Password!</div>
+            <button class="btn-login" onclick="doTelegramLogin()">LOGIN NOW</button>
+        </div>
+    </div>
+
+    <script>
+        let targetGame = null;
+
+        window.onload = function() {
+            updateWalletUI();
+            fetchServerBalance();
+            setInterval(fetchServerBalance, 3000);
+        };
+
+        // Real-time server balance synchronization
+        async function fetchServerBalance() {
+            const isLoggedIn = localStorage.getItem('userLoggedIn');
+            if (isLoggedIn !== 'true') return;
+
+            try {
+                let response = await fetch('/api/balance');
+                let data = await response.json();
+                if (data.success) {
+                    localStorage.setItem('userBalance', data.balance);
+                    updateWalletUI();
+                }
+            } catch (err) {
+                console.error("Balance background sync error:", err);
+            }
+        }
+
+        // Cross-tab synchronization listener
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'userBalance' || event.key === 'userLoggedIn') {
+                updateWalletUI();
+            }
+        });
+
+        function updateWalletUI() {
+            const walletBtn = document.getElementById('userWalletBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const isLoggedIn = localStorage.getItem('userLoggedIn');
+            const balance = parseFloat(localStorage.getItem('userBalance') || '0.00').toFixed(2);
+
+            if (isLoggedIn === 'true') {
+                walletBtn.innerHTML = `<span>💰</span> ₹ ${balance}`;
+                walletBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                logoutBtn.style.display = 'flex'; // Show logout button
+            } else {
+                walletBtn.innerHTML = `<span>🔑</span> LOGIN`;
+                walletBtn.style.background = 'linear-gradient(135deg, #d97706, #f59e0b)';
+                logoutBtn.style.display = 'none'; // Hide logout button
+            }
+        }
+
+        function handleWalletClick() {
+            const isLoggedIn = localStorage.getItem('userLoggedIn');
+            if (isLoggedIn === 'true') {
+                let currentBal = parseFloat(localStorage.getItem('userBalance') || '0.00').toFixed(2);
+                alert("Logged in as: " + localStorage.getItem('username') + "\nWallet Balance: ₹" + currentBal);
+            } else {
+                openLogin();
+            }
+        }
+
+        // Logout Function
+        function doLogout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userBalance');
+                updateWalletUI();
+                window.location.reload();
+            }
+        }
+
+        function playGame(gameName) {
+            targetGame = gameName;
+            let isLoggedIn = localStorage.getItem('userLoggedIn');
+            
+            if (isLoggedIn !== 'true') {
+                openLogin();
+            } else {
+                redirectToGame(gameName);
+            }
+        }
+
+        function openLogin() {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function closeLogin() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function doTelegramLogin() {
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('loginError');
+
+            if (!u || !p) {
+                errorDiv.innerText = "Please fill all details";
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            fetch('/api/verify-telegram-user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: u, password: p})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('username', u);
+                    localStorage.setItem('userBalance', data.balance);
+                    
+                    closeLogin();
+                    updateWalletUI();
+
+                    if(targetGame) {
+                        redirectToGame(targetGame);
+                    }
+                } else {
+                    errorDiv.innerText = data.message || "Invalid Credentials!";
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(e => {
+                console.error("Login Error:", e);
+                errorDiv.innerText = "Server Error. Try again!";
+                errorDiv.style.display = 'block';
+            });
+        }
+
+        function redirectToGame(game) {
+            if(game === 'tyre') {
+                window.location.href = '/game/tyre';
+            } else if(game === 'aviator') {
+                window.location.href = '/game/aviator';
+            } else if(game === 'parity') {
+                window.location.href = '/game/parity';
+            } else if(game === 'mines') {
+                window.location.href = '/game/mines';
+            } else if(game === 'chicken') {
+                window.location.href = '/game/chicken';
+            } else if(game === 'roulette') {
+                window.location.href = '/game/roulette';
+            }
+        }
+    </script>
+</body>
+</html>
