@@ -26,6 +26,11 @@ app.secret_key = os.getenv("SECRET_KEY", "oom_tyre_secret_key")
 
 # Direct PostgreSQL connection string
 DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/oomtyre")
+
+# --- RENDER FIX: Convert postgres:// to postgresql:// ---
+if DB_URL and DB_URL.startswith("postgres://"):
+    DB_URL = DB_URL.replace("postgres://", "postgresql://", 1)
+
 MINIMUM_BET = 100.0  # Minimum Bet Rule Set to ₹100
 ADMIN_SECRET = "SUPER_SECRET_KEY_123"  # Admin Secret Token
 
@@ -45,7 +50,7 @@ ALL_OUTCOME_VIDEOS = [
 
 # Global Master Admin Controls
 admin_settings = {
-    "global_win_rate": 0.25,  # 25% Base RTPDeveloper: Reload Window
+    "global_win_rate": 0.25,  # 25% Base RTP
     "emergency_lock": False,  # Forced Loss Mode
     "forced_outcome": None,  # Admin Override Outcome
 }
