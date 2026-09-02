@@ -217,7 +217,8 @@ def send_welcome(message):
         "**Account & Balance Controls:**\n"
         "➕ `/create <username> <password> <balance>`\n"
         "💰 `/add <username> <amount>`\n"
-        "💸 `/min <username> <amount>`\n\n"
+        "💸 `/min <username> <amount>`\n"
+        "💳 `/bal <username>`\n\n"
         "**Emergency & System Controls:**\n"
         "🔒 `/lock` - Emergency lock (Users ki win rate 0% kar dega)\n"
         "🏛️ `/house` - House edge boost (House profit mode)\n"
@@ -281,6 +282,26 @@ def handle_create_id(message):
         cursor.close()
         conn.close()
 
+@bot.message_handler(commands=['bal'])
+def handle_check_balance(message):
+    args = message.text.split()
+    if len(args) < 2:
+        bot.reply_to(message, "⚠️ Usage: `/bal <username>`", parse_mode="Markdown")
+        return
+    username = args[1]
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not user:
+        bot.reply_to(message, "no id found")
+    else:
+        bot.reply_to(message, f"💰 Balance of `{username}`: ₹{float(user['balance'])}", parse_mode="Markdown")
+
 @bot.message_handler(commands=['add'])
 def handle_add_balance(message):
     args = message.text.split()
@@ -296,6 +317,13 @@ def handle_add_balance(message):
 
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
+    if not cursor.fetchone():
+        cursor.close()
+        conn.close()
+        bot.reply_to(message, "no id found")
+        return
+
     cursor.execute("UPDATE users SET balance = balance + %s WHERE username = %s", (amount, username))
     conn.commit()
     cursor.close()
@@ -317,6 +345,13 @@ def handle_minus_balance(message):
 
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
+    if not cursor.fetchone():
+        cursor.close()
+        conn.close()
+        bot.reply_to(message, "no id found")
+        return
+
     cursor.execute("UPDATE users SET balance = GREATEST(0.0, balance - %s) WHERE username = %s", (amount, username))
     conn.commit()
     cursor.close()

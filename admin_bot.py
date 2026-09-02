@@ -58,6 +58,7 @@ def start(message):
         "⚡ **OOM TYRE Admin Control Panel**\n\n"
         "**User & Account Commands:**\n"
         "🔹 `/create username password balance` - Create New User\n"
+        "🔹 `/bal username` - Check User Balance\n"
         "🔹 `/add username amount` - Add User Balance\n"
         "🔹 `/min username amount` - Deduct User Balance\n\n"
         "**Game & Outcome Controls:**\n"
@@ -99,43 +100,85 @@ def create_user(message):
     except Exception:
         bot.reply_to(message, "Format: `/create username password balance`", parse_mode="Markdown")
 
+# --- COMMAND: /bal user ---
+@bot.message_handler(commands=['bal'])
+def check_bal(message):
+    try:
+        parts = message.text.split()
+        if len(parts) < 2:
+            bot.reply_to(message, "no id found")
+            return
+        
+        user = parts[1]
+        resp = requests.get(f"{BACKEND_BASE_URL}/api/admin/get_user?username={user}&secret={ADMIN_SECRET}")
+        
+        if resp.status_code == 200:
+            res = resp.json()
+            if res.get("status") == "success":
+                balance = res.get("balance", 0.0)
+                bot.reply_to(message, f"👤 User: *{user}*\n💰 Balance: ₹{balance}", parse_mode="Markdown")
+            else:
+                bot.reply_to(message, "no id found")
+        else:
+            bot.reply_to(message, "no id found")
+    except Exception:
+        bot.reply_to(message, "no id found")
+
 # --- COMMAND: /add user amount ---
 @bot.message_handler(commands=['add'])
 def add_bal(message):
     try:
-        _, user, amt = message.text.split()
-        res = requests.post(f"{BACKEND_BASE_URL}/api/admin/update_balance", json={
+        parts = message.text.split()
+        if len(parts) < 3:
+            bot.reply_to(message, "no id found")
+            return
+            
+        _, user, amt = parts
+        resp = requests.post(f"{BACKEND_BASE_URL}/api/admin/update_balance", json={
             "secret": ADMIN_SECRET,
             "username": user,
             "action": "add",
             "amount": float(amt)
-        }).json()
+        })
         
-        if res.get("status") == "success":
-            bot.reply_to(message, f"💰 {res.get('message')}")
+        if resp.status_code == 200:
+            res = resp.json()
+            if res.get("status") == "success":
+                bot.reply_to(message, f"💰 {res.get('message')}")
+            else:
+                bot.reply_to(message, "no id found")
         else:
-            bot.reply_to(message, f"❌ Error: {res.get('message')}")
+            bot.reply_to(message, "no id found")
     except Exception:
-        bot.reply_to(message, "Format: `/add username amount`", parse_mode="Markdown")
+        bot.reply_to(message, "no id found")
 
 # --- COMMAND: /min user amount ---
 @bot.message_handler(commands=['min'])
 def minus_bal(message):
     try:
-        _, user, amt = message.text.split()
-        res = requests.post(f"{BACKEND_BASE_URL}/api/admin/update_balance", json={
+        parts = message.text.split()
+        if len(parts) < 3:
+            bot.reply_to(message, "no id found")
+            return
+            
+        _, user, amt = parts
+        resp = requests.post(f"{BACKEND_BASE_URL}/api/admin/update_balance", json={
             "secret": ADMIN_SECRET,
             "username": user,
             "action": "deduct",
             "amount": float(amt)
-        }).json()
+        })
         
-        if res.get("status") == "success":
-            bot.reply_to(message, f"🔻 {res.get('message')}")
+        if resp.status_code == 200:
+            res = resp.json()
+            if res.get("status") == "success":
+                bot.reply_to(message, f"🔻 {res.get('message')}")
+            else:
+                bot.reply_to(message, "no id found")
         else:
-            bot.reply_to(message, f"❌ Error: {res.get('message')}")
+            bot.reply_to(message, "no id found")
     except Exception:
-        bot.reply_to(message, "Format: `/min username amount`", parse_mode="Markdown")
+        bot.reply_to(message, "no id found")
 
 # --- COMMAND: Dynamic Win Rate Setter (/setwin 30) ---
 @bot.message_handler(commands=['setwin'])
