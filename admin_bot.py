@@ -10,15 +10,18 @@ import threading
 
 load_dotenv()
 
-# TOKEN KO APNE TELEGRAM BOT TOKEN SE REPLACE KAREIN AGAR .ENV MEIN NA HO
-ADMIN_BOT_TOKEN = os.getenv("ADMIN_BOT_TOKEN", "YOUR_ACTUAL_BOT_TOKEN_HERE")
+# Environment variables & constants
+ADMIN_BOT_TOKEN = os.getenv("ADMIN_BOT_TOKEN", os.getenv("BOT_TOKEN", "YOUR_ACTUAL_BOT_TOKEN_HERE"))
 DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/oomtyre")
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:5000")
 BACKEND_URL = os.getenv("BACKEND_URL", f"{BACKEND_BASE_URL}/api/admin/set_control")
 ADMIN_SECRET = "SUPER_SECRET_KEY_123"
 
-# APNA TELEGRAM CHAT ID PASTE KAREIN
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "YOUR_ACTUAL_CHAT_ID_HERE")
+
+# PostgreSQL URL fix for Render
+if DB_URL and DB_URL.startswith("postgres://"):
+    DB_URL = DB_URL.replace("postgres://", "postgresql://", 1)
 
 bot = telebot.TeleBot(ADMIN_BOT_TOKEN)
 
@@ -47,36 +50,46 @@ def init_game_table():
 
 init_game_table()
 
-# --- COMMAND: /start ---
-@bot.message_handler(commands=['start'])
+# --- COMMAND: /start & /help ---
+@bot.message_handler(commands=['start', 'help'])
 def start(message):
     bot.reply_to(
         message, 
         "⚡ **OOM TYRE Admin Control Panel**\n\n"
-        "**Available Commands:**\n"
-        "🔹 `/create user pass bal` - Create New User\n"
-        "🔹 `/addbal user amt` - Add User Balance\n"
-        "🔹 `/minusbal user amt` - Deduct User Balance\n"
+        "**User & Account Commands:**\n"
+        "🔹 `/create username password balance` - Create New User\n"
+        "🔹 `/addbal username amount` - Add User Balance\n"
+        "🔹 `/minusbal username amount` - Deduct User Balance\n\n"
+        "**Game & Outcome Controls:**\n"
         "🔹 `/setwin 30` - Set Live Win Rate (0-100%)\n"
-        "🔹 `/red`, `/green`, `/blue` - Fix Next Result\n"
+        "🔹 `/red`, `/green`, `/blue` - Fix Next Color Result\n"
+        "🔹 `/num <1-36>` - Fix Next Roulette Number\n"
         "🔹 `/lock` - Toggle Forced Loss Emergency Lock\n"
-        "🔹 `/house` - Live Daily Profit/Loss & Total Bets Report",
+        "🔹 `/house` - Live Daily Profit/Loss Report\n"
+        "🔹 `/stopall` - Stop All Games\n"
+        "🔹 `/stopwheel` - Stop Wheel/Color Game Only\n"
+        "🔹 `/startall` - Resume All Games\n"
+        "🔹 `/auto` - Reset Overrides & Back to Normal Algo",
         parse_mode="Markdown"
     )
 
 # --- COMMAND: /create user pwd bal ---
-@bot.message_handler(commands=['create'])
+@bot.message_handler(commands=['create', 'create_id'])
 def create_user(message):
     try:
         parts = message.text.split()
-        if len(parts) < 4:
+        if len(parts) < 3:
             raise ValueError("Insufficient arguments")
-        _, user, pwd, bal = parts[:4]
+        
+        user = parts[1]
+        pwd = parts[2]
+        bal = float(parts[3]) if len(parts) >= 4 else 100.0
+
         res = requests.post(f"{BACKEND_BASE_URL}/api/admin/create_user", json={
             "secret": ADMIN_SECRET,
             "username": user,
             "password": pwd,
-            "balance": float(bal)
+            "balance": bal
         }).json()
         
         if res.get("status") == "success":
@@ -87,7 +100,7 @@ def create_user(message):
         bot.reply_to(message, "Format: `/create username password balance`", parse_mode="Markdown")
 
 # --- COMMAND: /addbal user amount ---
-@bot.message_handler(commands=['addbal'])
+@bot.message_handler(commands=['addbal', 'add_bal'])
 def add_bal(message):
     try:
         _, user, amt = message.text.split()
@@ -106,7 +119,7 @@ def add_bal(message):
         bot.reply_to(message, "Format: `/addbal username amount`", parse_mode="Markdown")
 
 # --- COMMAND: /minusbal user amount ---
-@bot.message_handler(commands=['minusbal'])
+@bot.message_handler(commands=['minusbal', 'minus_bal'])
 def minus_bal(message):
     try:
         _, user, amt = message.text.split()
@@ -144,13 +157,12 @@ def set_win_rate(message):
     except Exception:
         bot.reply_to(message, "Format: `/setwin <0-100>` (Example: `/setwin 30`)", parse_mode="Markdown")
 
-# --- COMMAND: Force Outcome Handler (/red, /green, /blue) ---
+# --- COMMAND: Force Color Outcome Handler (/red, /green, /blue) ---
 @bot.message_handler(commands=['red', 'green', 'blue'])
 def set_result(message):
     try:
         color = message.text.replace('/', '').strip().lower()
         
-        # Sync directly with Backend API
         res = requests.post(BACKEND_URL, json={
             "force_outcome": color,
             "secret": ADMIN_SECRET
@@ -159,7 +171,7 @@ def set_result(message):
         if res.get("success"):
             bot.reply_to(message, f"🎯 **Next Result Fixed:** {color.upper()}")
         else:
-            bot.reply_to(message, f"❌ Failed to set outcome.")
+            bot.reply_to(message, "❌ Failed to set outcome.")
     except Exception as e:
         bot.reply_to(message, f"❌ Outcome set error: {str(e)}")
 
@@ -174,6 +186,49 @@ def emergency_lock(message):
         bot.reply_to(message, "🚨 **Emergency House Lock Activated!** (Forced Loss Mode Active)")
     except Exception as e:
         bot.reply_to(message, f"❌ Lock error: {str(e)}")
+
+# --- COMMAND: System Controls (/stopall, /stopwheel, /startall, /auto) ---
+@bot.message_handler(commands=['stopall'])
+def stop_all(message):
+    try:
+        requests.post(BACKEND_URL, json={"stop_all_games": True, "secret": ADMIN_SECRET})
+        bot.reply_to(message, "🛑 **All Games Stopped!**")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: {str(e)}")
+
+@bot.message_handler(commands=['stopwheel'])
+def stop_wheel(message):
+    try:
+        requests.post(BACKEND_URL, json={"stop_wheel_game": True, "secret": ADMIN_SECRET})
+        bot.reply_to(message, "🎡 **Wheel Game Stopped!**")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: {str(e)}")
+
+@bot.message_handler(commands=['startall'])
+def start_all(message):
+    try:
+        requests.post(BACKEND_URL, json={
+            "stop_all_games": False,
+            "stop_wheel_game": False,
+            "secret": ADMIN_SECRET
+        })
+        bot.reply_to(message, "▶️ **All Games Resumed!**")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: {str(e)}")
+
+@bot.message_handler(commands=['auto'])
+def clear_overrides(message):
+    try:
+        requests.post(BACKEND_URL, json={
+            "emergency_lock": False,
+            "force_outcome": None,
+            "stop_all_games": False,
+            "stop_wheel_game": False,
+            "secret": ADMIN_SECRET
+        })
+        bot.reply_to(message, "🔄 **System Restored to Normal Smart Algorithm!**")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: {str(e)}")
 
 # --- COMMAND: /house (Live P&L Report) ---
 @bot.message_handler(commands=['house'])

